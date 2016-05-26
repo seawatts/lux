@@ -10,15 +10,235 @@ const { max } = Math;
 const { isArray } = Array;
 const { keys, defineProperties } = Object;
 
+/**
+ * The `Serializer` class is where you declare the specific attributes and
+ * relationships you would like to include for a particular resource (`Model`).
+ *
+ * To create a new `Serializer` in your application, you can use the generate
+ * command.
+ *
+ * ```bash
+ * lux generate serializer post
+ * ```
+ *
+ * @class Serializer
+ * @constructor
+ */
 class Serializer {
+  /**
+   * The resolved `Model` that a `Serializer` instance represents.
+   *
+   * ```javascript
+   * PostsSerializer.model
+   * //=> Post
+   * ```
+   *
+   * @attribute model
+   * @type Model
+   * @private
+   * @readOnly
+   */
   model;
+
+  /**
+   * The public domain where an `Application` instance is located. This is
+   * defined in ./config/environments/{{NODE_ENV}.js} and is primarily used for
+   * creating `links` resource objects.
+   *
+   * @attribute domain
+   * @type String
+   * @private
+   * @readOnly
+   */
   domain;
+
+  /**
+   * A Map of all resolved serializers in a an `Application` instance. This is
+   * used when a `Serializer` instance has to serialize an embedded
+   * relationship.
+   *
+   * @attribute serializers
+   * @type Map
+   * @private
+   * @readOnly
+   */
   serializers;
 
+  /**
+   * An Array of the `hasOne` or `belongsTo` relationships on a `Serializer`
+   * instance's model to include in the `relationships` resource object of a
+   * serialized payload.
+   *
+   * ```javascript
+   * class PostsSerializer extends Serializer {
+   *   hasOne = [
+   *     'author'
+   *   ];
+   * }
+   * ```
+   *
+   * ```json
+   * {
+   *   "data": [
+   *     {
+   *       "type": "posts",
+   *       "id": 1,
+   *       "attributes": {},
+   *       "relationships": [
+   *         {
+   *           "data": {
+   *             "id": 1,
+   *             "type": "authors"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/authors/1"
+   *           }
+   *         }
+   *       ],
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   * ```
+   *
+   * @attribute hasOne
+   * @type Array
+   */
   hasOne = [];
+
+  /**
+   * An Array of the `hasMany` relationships on a `Serializer` instance's model
+   * to include in the `relationships` resource object of a serialized payload.
+   *
+   * ```javascript
+   * class PostsSerializer extends Serializer {
+   *   hasMany = [
+   *     'comments'
+   *   ];
+   * }
+   * ```
+   *
+   * ```json
+   * {
+   *   "data": [
+   *     {
+   *       "type": "posts",
+   *       "id": 1,
+   *       "attributes": {},
+   *       "relationships": [
+   *         {
+   *           "data": {
+   *             "id": 1,
+   *             "type": "comments"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/comments/1"
+   *           }
+   *         },
+   *         {
+   *           "data": {
+   *             "id": 2,
+   *             "type": "comments"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/comments/2"
+   *           }
+   *         }
+   *       ],
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   * ```
+   *
+   * @attribute hasMany
+   * @type Array
+   */
   hasMany = [];
+
+  /**
+   * An Array of the `attributes` on a `Serializer` instance's model to include
+   * in the `attributes` resource object of a serialized payload.
+   *
+   * ```javascript
+   * class PostsSerializer extends Serializer {
+   *   attributes = [
+   *     'title',
+   *     'isPublic'
+   *   ];
+   * }
+   * ```
+   *
+   * ```json
+   * {
+   *   "data": [
+   *     {
+   *       "type": "posts",
+   *       "id": 1,
+   *       "attributes": {
+   *         "title": "Not another Node.js framework...",
+   *         "is-public": true
+   *       },
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   * ```
+   *
+   * @attribute attributes
+   * @type Array
+   */
   attributes = [];
 
+  /**
+   * Create an instance of `Serializer`.
+   *
+   * WARNING:
+   * This is a private constructor and you should not instantiate a `Serializer`
+   * manually. Serializers are instantiated automatically by your application
+   * when it is started.
+   *
+   * @method constructor
+   * @param {Object} [props={}] An object containing the model, domain, and
+   * serializers to install on the `Serializer` instance.
+   * @private
+   */
   constructor({ model, domain, serializers } = {}) {
     defineProperties(this, {
       model: {

@@ -13,10 +13,12 @@
 *.DS_Store
 webpack.config.babel.js
 /examples
+yuidoc.json
 
 # docs
 CHANGELOG.md
 ROADMAP.md
+/docs
 
 # logs
 /log

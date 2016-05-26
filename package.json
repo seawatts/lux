@@ -19,6 +19,7 @@
   "scripts": {
     "build": "npm run lint && npm run clean && webpack",
     "clean": "rm -rf dist",
+    "docs": "rm -rf docs/* && yuidoc -c yuidoc.json",
     "lint": "eslint src/**",
     "start": "lux serve",
     "test": "npm run build && mocha --timeout 60000 --compilers=js:babel-core/register test/helper.js test/unit/**/*.js test/integration/**/*.js"
@@ -52,6 +53,7 @@
     "isomorphic-fetch": "2.2.1",
     "json-loader": "0.5.4",
     "mocha": "2.5.3",
-    "webpack": "1.13.1"
+    "webpack": "1.13.1",
+    "yuidocjs": "0.10.1"
   }
 }
