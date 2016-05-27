@@ -1,3 +1,4 @@
+/* @flow */
 import { Readable } from 'stream';
 import { dasherize, pluralize, camelize } from 'inflection';
 
@@ -11,294 +12,308 @@ const { isArray } = Array;
 const { keys, defineProperties } = Object;
 
 /**
-  @module lux-framework
-*/
-
-/**
-  The `Serializer` class is where you declare the specific attributes and
-  relationships you would like to include for a particular resource (`Model`).
-
-  To create a new `Serializer` in your application, you can use the generate
-  command.
-
-  ```bash
-  lux generate serializer post
-  ```
-
-  @class Serializer
-  @constructor
-  @public
+ * The `Serializer` class is where you declare the specific attributes and
+ * relationships you would like to include for a particular resource (`Model`).
  */
 class Serializer {
   /**
-    The resolved `Model` that a `Serializer` instance represents.
-
-    ```javascript
-    PostsSerializer.model
-    //=> Post
-    ```
-
-    @attribute model
-    @type Model
-    @private
-    @readOnly
+   * The resolved `Model` that a `Serializer` instance represents.
+   *
+   * @example
+   * PostsSerializer.model
+   * // => Post
+   *
+   * @member model
+   * @memberof Serializer
+   * @instance
+   * @readonly
+   * @private
    */
-  model;
+  model: any;
 
   /**
-    The public domain where an `Application` instance is located. This is
-    defined in ./config/environments/{{NODE_ENV}.js} and is primarily used for
-    creating `links` resource objects.
-
-    @attribute domain
-    @type String
-    @private
-    @readOnly
+   * The public domain where an `Application` instance is located. This is
+   * defined in ./config/environments/{{NODE_ENV}.js} and is primarily used for
+   * creating `links` resource objects.
+   *
+   * @member domain
+   * @memberof Serializer
+   * @instance
+   * @readonly
+   * @private
    */
-  domain;
+  domain: ?string;
 
   /**
-    A Map of all resolved serializers in a an `Application` instance. This is
-    used when a `Serializer` instance has to serialize an embedded
-    relationship.
-
-    @attribute serializers
-    @type Map
-    @private
-    @readOnly
+   * A Map of all resolved serializers in a an `Application` instance. This is
+   * used when a `Serializer` instance has to serialize an embedded
+   * relationship.
+   *
+   * @member serializers
+   * @memberof Serializer
+   * @instance
+   * @readonly
+   * @private
    */
-  serializers;
+  serializers: typeof Map;
 
   /**
-    An Array of the `hasOne` or `belongsTo` relationships on a `Serializer`
-    instance's model to include in the `relationships` resource object of a
-    serialized payload.
-
-    ```javascript
-    class PostsSerializer extends Serializer {
-      hasOne = [
-        'author'
-      ];
-    }
-    ```
-
-    ```json
-    {
-      "data": [
-        {
-          "type": "posts",
-          "id": 1,
-          "attributes": {},
-          "relationships": [
-            {
-              "data": {
-                "id": 1,
-                "type": "authors"
-              },
-               "links": {
-                 "self": "http://localhost:4000/authors/1"
-              }
-            }
-          ],
-          "links": {
-            "self": "http://localhost:4000/posts/1"
-          }
-        }
-      ],
-      "links": {
-        "self": "http://localhost:4000/posts",
-        "first": "http://localhost:4000/posts?page=1",
-        "last": "http://localhost:4000/posts?page=1",
-        "prev": null,
-        "next": null
-      }
-      "jsonapi": {
-        "version": "1.0"
-      }
-    }
-    ```
-
-    @attribute hasOne
-    @type Array
+   * An Array of the `hasOne` or `belongsTo` relationships on a `Serializer`
+   * instance's model to include in the `relationships` resource object of a
+   * serialized payload.
+   *
+   * @example
+   * class PostsSerializer extends Serializer {
+   *   hasOne = [
+   *     'author'
+   *   ];
+   * }
+   *
+   * // A request to `/posts` would result in the following payload:
+   *
+   * {
+   *   "data": [
+   *     {
+   *       "id": 1,
+   *       "type": "posts",
+   *       "attributes": {},
+   *       "relationships": [
+   *         {
+   *           "data": {
+   *             "id": 1,
+   *             "type": "authors"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/authors/1"
+   *           }
+   *         }
+   *       ],
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   *
+   * @member hasOne
+   * @memberof Serializer
+   * @instance
+   * @type string[]
    */
-  hasOne = [];
+  hasOne: Array<string> = [];
 
   /**
-    An Array of the `hasMany` relationships on a `Serializer` instance's model
-    to include in the `relationships` resource object of a serialized payload.
-
-    ```javascript
-    class PostsSerializer extends Serializer {
-      hasMany = [
-        'comments'
-      ];
-    }
-    ```
-
-    ```json
-    {
-      "data": [
-        {
-          "type": "posts",
-          "id": 1,
-          "attributes": {},
-          "relationships": [
-            {
-              "data": {
-                "id": 1,
-                "type": "comments"
-              },
-               "links": {
-                 "self": "http://localhost:4000/comments/1"
-              }
-            },
-            {
-              "data": {
-                "id": 2,
-                "type": "comments"
-              },
-               "links": {
-                 "self": "http://localhost:4000/comments/2"
-              }
-            }
-          ],
-          "links": {
-            "self": "http://localhost:4000/posts/1"
-          }
-        }
-      ],
-      "links": {
-        "self": "http://localhost:4000/posts",
-        "first": "http://localhost:4000/posts?page=1",
-        "last": "http://localhost:4000/posts?page=1",
-        "prev": null,
-        "next": null
-      }
-      "jsonapi": {
-        "version": "1.0"
-      }
-    }
-    ```
-
-    @attribute hasMany
-    @type Array
+   * An Array of the `hasMany` relationships on a `Serializer` instance's model
+   * to include in the `relationships` resource object of a serialized payload.
+   *
+   * @example
+   * class PostsSerializer extends Serializer {
+   *   hasMany = [
+   *     'comments'
+   *   ];
+   * }
+   *
+   * // A request to `/posts` would result in the following payload:
+   *
+   * {
+   *   "data": [
+   *     {
+   *       "id": 1,
+   *       "type": "posts",
+   *       "attributes": {},
+   *       "relationships": [
+   *         {
+   *           "data": {
+   *             "id": 1,
+   *             "type": "comments"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/comments/1"
+   *           }
+   *         },
+   *         {
+   *           "data": {
+   *             "id": 2,
+   *             "type": "comments"
+   *           },
+   *            "links": {
+   *              "self": "http://localhost:4000/comments/2"
+   *           }
+   *         }
+   *       ],
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   *
+   * @member hasMany
+   * @memberof Serializer
+   * @instance
+   * @type string[]
    */
-  hasMany = [];
+  hasMany: Array<string> = [];
 
   /**
-    An Array of the `attributes` on a `Serializer` instance's model to include
-    in the `attributes` resource object of a serialized payload.
-
-    ```javascript
-    class PostsSerializer extends Serializer {
-      attributes = [
-        'title',
-        'isPublic'
-      ];
-    }
-    ```
-
-    ```json
-    {
-      "data": [
-        {
-          "type": "posts",
-          "id": 1,
-          "attributes": {
-            "title": "Not another Node.js framework...",
-            "is-public": true
-          },
-          "links": {
-            "self": "http://localhost:4000/posts/1"
-          }
-        }
-      ],
-      "links": {
-        "self": "http://localhost:4000/posts",
-        "first": "http://localhost:4000/posts?page=1",
-        "last": "http://localhost:4000/posts?page=1",
-        "prev": null,
-        "next": null
-      }
-      "jsonapi": {
-        "version": "1.0"
-      }
-    }
-    ```
-
-    @attribute attributes
-    @type Array
+   * An Array of the `attributes` on a `Serializer` instance's model to include
+   * in the `attributes` resource object of a serialized payload.
+   *
+   * @example
+   * class PostsSerializer extends Serializer {
+   *   attributes = [
+   *     'title',
+   *     'isPublic'
+   *   ];
+   * }
+   *
+   * // A request to `/posts` would result in the following payload:
+   *
+   * {
+   *   "data": [
+   *     {
+   *       "id": 1,
+   *       "type": "posts",
+   *       "attributes": {
+   *         "title": "Not another Node.js framework...",
+   *         "is-public": true
+   *       },
+   *       "links": {
+   *         "self": "http://localhost:4000/posts/1"
+   *       }
+   *     }
+   *   ],
+   *   "links": {
+   *     "self": "http://localhost:4000/posts",
+   *     "first": "http://localhost:4000/posts?page=1",
+   *     "last": "http://localhost:4000/posts?page=1",
+   *     "prev": null,
+   *     "next": null
+   *   }
+   *   "jsonapi": {
+   *     "version": "1.0"
+   *   }
+   * }
+   *
+   * @member attributes
+   * @memberof Serializer
+   * @instance
+   * @type string[]
    */
-  attributes = [];
+  attributes: Array<string> = [];
 
   /**
-    Create an instance of `Serializer`.
-
-    WARNING:
-    This is a private constructor and you should not instantiate a `Serializer`
-    manually. Serializers are instantiated automatically by your application
-    when it is started.
-
-    @method constructor
-    @param {Object} [props={}] An object containing the model, domain, and
-    serializers to install on the `Serializer` instance.
-    @private
+   * Create an instance of `Serializer`.
+   *
+   * WARNING:
+   * This is a private constructor and you should not instantiate a `Serializer`
+   * manually. Serializers are instantiated automatically by your application
+   * when it is started.
+   *
+   * @method constructor
+   * @param {Object} [props={}] An object containing the model, domain, and
+   * serializers to install on the `Serializer` instance.
+   * @private
    */
-  constructor({ model, domain, serializers } = {}) {
-    defineProperties(this, {
-      model: {
-        value: model,
-        writable: false,
-        enumerable: false,
-        configurable: false
-      },
+   constructor({
+     model,
+     domain,
+     serializers
+   }: {
+     model: any,
+     domain: string,
+     serializers: Map
+   } = {}) {
+     defineProperties(this, {
+       model: {
+         value: model,
+         writable: false,
+         enumerable: false,
+         configurable: false
+       },
 
-      domain: {
-        value: domain,
-        writable: false,
-        enumerable: false,
-        configurable: false
-      },
+       domain: {
+         value: domain,
+         writable: false,
+         enumerable: false,
+         configurable: false
+       },
 
-      serializers: {
-        value: serializers,
-        writable: false,
-        enumerable: false,
-        configurable: false
-      }
-    });
+       serializers: {
+         value: serializers,
+         writable: false,
+         enumerable: false,
+         configurable: false
+       }
+     });
 
-    return this;
-  }
+     return this;
+   }
 
-  formatKey(key) {
+  /**
+   * @method formatKey
+   * @private
+   */
+  formatKey(key: string): string {
     return dasherize(underscore(key));
   }
 
-  fieldsFor(name, fields = {}) {
-    fields = fields[camelize(name.replace(/\-/g, '_'), true)];
+  /**
+   * @method fieldsFor
+   * @private
+   */
+  fieldsFor(name: string, fields: Object = {}): Array<string> {
+    const match: ?Array<string> = fields[camelize(underscore(name), true)];
 
-    if (fields) {
-      fields = [...fields];
-    }
-
-    return fields;
+    return match ? [...match] : [];
   }
 
-  attributesFor(item, fields = []) {
-    return (fields.length ? fields : this.attributes)
-      .reduce((hash, attr) => {
-        if (attr.indexOf('id') < 0) {
-          hash[this.formatKey(attr)] = item[attr];
-        }
+  /**
+   * @method attributesFor
+   * @private
+   */
+   attributesFor(item: Object, fields: Array<string> = []): Object {
+     return (fields.length ? fields : this.attributes)
+       .reduce((hash, attr) => {
+         if (attr.indexOf('id') < 0) {
+           hash[this.formatKey(attr)] = item[attr];
+         }
 
-        return hash;
-      }, {});
-  }
+         return hash;
+       }, {});
+   }
 
-  relationshipsFor(item, include, fields) {
+   /**
+    * @method relationshipsFor
+    * @private
+    */
+   relationshipsFor(
+     item: any,
+     include: Array<any>,
+     fields: Object
+   ): Object {
     const { domain, hasOne, hasMany } = this;
-    const hash = { data: {}, included: [] };
+    const hash: Object = { data: {}, included: [] };
 
     hash.data = {
       ...hasOne.reduce((obj, key) => {
@@ -379,7 +394,17 @@ class Serializer {
     return hash;
   }
 
-  serializeGroup(stream, key, data, include, fields) {
+  /**
+   * @method serializeGroup
+   * @private
+   */
+  serializeGroup(
+    stream: Readable,
+    key: string,
+    data: any,
+    include: any,
+    fields: any
+  ): void {
     stream.push(`"${this.formatKey(key)}":`);
 
     if (key === 'data') {
@@ -456,7 +481,16 @@ class Serializer {
     }
   }
 
-  async serializePayload(stream, payload, include, fields) {
+  /**
+   * @method serializePayload
+   * @private
+   */
+  async serializePayload(
+    stream: Readable,
+    payload: any,
+    include: any,
+    fields: any
+  ): Promise<Readable> {
     tryCatch(() => {
       let i, key, payloadKeys;
 
@@ -481,8 +515,12 @@ class Serializer {
     return stream;
   }
 
-  stream(payload, include, fields) {
-    const stream = new Readable({
+  /**
+   * @method stream
+   * @private
+   */
+  stream(payload: any, include: any, fields: any): Readable {
+    const stream: Readable = new Readable({
       encoding: 'utf8'
     });
 
@@ -492,30 +530,55 @@ class Serializer {
   }
 
   @bound
-  serializeOne(item, include, fields, links = true) {
-    const { id, modelName: name } = item;
-    const type = pluralize(name);
+  /**
+   * @method serializeOne
+   * @private
+   */
+  serializeOne(
+    item: Object,
+    include: any,
+    fields: Object,
+    links: boolean = true
+  ): Object {
+    const {
+      id,
+      modelName: name
+    }: {
+      id: number,
+      modelName: string
+    } = item;
+
+    const type: string = pluralize(name);
 
     const data = {
       id,
       type,
-      attributes: this.attributesFor(item, this.fieldsFor(name, fields))
+      attributes: this.attributesFor(item, this.fieldsFor(name, fields)),
+      relationships: null,
+      included: null,
+      links: {}
     };
 
     const relationships = this.relationshipsFor(item, include, fields);
 
     if (keys(relationships.data).length) {
       data.relationships = relationships.data;
+    } else {
+      delete data.relationships;
     }
 
     if (relationships.included.length) {
       data.included = relationships.included;
+    } else {
+      delete data.included;
     }
 
     if (links) {
       data.links = {
         self: `${this.domain}/${type}/${id}`
       };
+    } else {
+      delete data.links;
     }
 
     return data;

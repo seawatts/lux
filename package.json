@@ -17,12 +17,13 @@
     "lux": "bin/lux"
   },
   "scripts": {
-    "build": "npm run lint && npm run clean && webpack",
+    "build": "npm run clean && npm run lint && npm run type-check && webpack",
     "clean": "rm -rf dist",
-    "docs": "rm -rf docs && yuidoc -c yuidoc.json",
+    "docs": "rm -rf docs && documentation build src -p -o docs -f html",
     "lint": "eslint src/**/*.js",
     "start": "lux serve",
-    "test": "npm run build && mocha --timeout 60000 --compilers=js:babel-core/register test/helper.js test/unit/**/*.js test/integration/**/*.js"
+    "test": "npm run build && mocha --timeout 60000 --compilers=js:babel-core/register test/helper.js test/unit/**/*.js test/integration/**/*.js",
+    "type-check": "flow check"
   },
   "author": "Zachary Golba",
   "license": "MIT",
@@ -44,16 +45,19 @@
     "babel-core": "6.9.0",
     "babel-eslint": "6.0.4",
     "babel-loader": "6.2.4",
+    "babel-plugin-syntax-flow": "6.8.0",
     "babel-plugin-transform-decorators-legacy": "1.3.4",
+    "babel-plugin-transform-flow-strip-types": "6.8.0",
     "babel-plugin-transform-runtime": "6.9.0",
     "babel-preset-es2015": "6.9.0",
     "babel-preset-stage-1": "6.5.0",
     "chai": "3.5.0",
+    "documentation": "4.0.0-beta3",
     "eslint": "2.10.2",
+    "flow-bin": "0.25.0",
     "isomorphic-fetch": "2.2.1",
     "json-loader": "0.5.4",
     "mocha": "2.5.3",
-    "webpack": "1.13.1",
-    "yuidocjs": "0.10.1"
+    "webpack": "1.13.1"
   }
 }

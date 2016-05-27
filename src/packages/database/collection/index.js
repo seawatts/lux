@@ -2,10 +2,28 @@ import insert from './utils/insert';
 
 const { entries } = Object;
 
-class Collection extends Array {
-  constructor({ model, records = [], related = {} } = {}) {
+/**
+ * @private
+ */
+class Collection extends Array<Object> {
+  constructor({
+    model,
+    records = [],
+    related = {}
+  }: {
+    model: any,
+    records: Array<Object>,
+    related: Object
+  } = {}) {
     const { length } = records;
-    const { tableName, primaryKey } = model;
+
+    const {
+      tableName,
+      primaryKey
+    }: {
+      tableName: string,
+      primaryKey: string
+    } = model;
 
     super(length);
     insert(this, records);
@@ -14,7 +32,9 @@ class Collection extends Array {
       entries(related)
         .forEach(([name, relatedRecords]) => {
           const match = relatedRecords
-            .filter(({ [`${tableName}.${primaryKey}`]: pk }) => {
+            .filter(relatedRecord => {
+              const pk: ?string = relatedRecord[`${tableName}.${primaryKey}`];
+
               return pk === row[primaryKey];
             })
             .map(relatedRecord => {
@@ -29,6 +49,7 @@ class Collection extends Array {
                 }
               }, {});
             });
+
 
           if (match.length) {
             row[name] = match;

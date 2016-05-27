@@ -4,7 +4,9 @@
     "stage-1"
   ],
   "plugins": [
-    "transform-runtime",
-    "transform-decorators-legacy"
+    "syntax-flow",
+    "transform-decorators-legacy",
+    "transform-flow-strip-types",
+    "transform-runtime"
   ]
 }
