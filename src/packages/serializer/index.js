@@ -55,7 +55,7 @@ class Serializer {
    * @readonly
    * @private
    */
-  serializers: typeof Map;
+  serializers: Map;
 
   /**
    * An Array of the `hasOne` or `belongsTo` relationships on a `Serializer`
