@@ -1,5 +1,4 @@
 import Promise from 'bluebird';
-
 import Database, { createMigrations, pendingMigrations } from '../../database';
 import Logger, { sql } from '../../logger';
 

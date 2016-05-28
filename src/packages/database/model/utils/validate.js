@@ -2,8 +2,7 @@ import Validation from '../../validation';
 import { ValidationError } from '../errors';
 
 import pick from '../../../../utils/pick';
-
-const { entries } = Object;
+import entries from '../../../../utils/entries';
 
 export default function validate(instance) {
   const { initialized, constructor: model } = instance;

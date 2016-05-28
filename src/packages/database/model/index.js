@@ -10,6 +10,7 @@ import fetchHasMany from './utils/fetch-has-many';
 
 import pick from '../../../utils/pick';
 import omit from '../../../utils/omit';
+import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
 import readonly from '../../../decorators/readonly';
@@ -18,7 +19,7 @@ import nonconfigurable from '../../../decorators/nonconfigurable';
 
 const { isArray } = Array;
 const { isFinite } = Number;
-const { assign, entries, keys } = Object;
+const { assign, keys } = Object;
 
 class Model {
   static table;
@@ -492,5 +493,5 @@ class Model {
   }
 }
 
-export initialize from './utils/initialize';
+export { default as initialize } from './utils/initialize';
 export default Model;

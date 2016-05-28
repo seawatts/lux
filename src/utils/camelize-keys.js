@@ -1,6 +1,7 @@
 import { camelize } from 'inflection';
 
-const { entries } = Object;
+import entries from './entries';
+
 const { isArray } = Array;
 
 export default function camelizeKeys(obj, deep = false) {

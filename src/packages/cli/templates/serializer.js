@@ -1,9 +1,8 @@
 import { classify, camelize, pluralize } from 'inflection';
 
 import indent from '../utils/indent';
+import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
-
-const { entries } = Object;
 
 export default (name, attrs = []) => {
   name = classify(underscore(name));

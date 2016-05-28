@@ -7,15 +7,14 @@ import bound from '../../decorators/bound';
 
 const { defineProperties } = Object;
 
-const routesKey = Symbol('routes');
-
 class Router {
+  routes;
   serializer;
   controllers;
 
   constructor() {
     defineProperties(this, {
-      [routesKey]: {
+      routes: {
         value: new Map(),
         writable: false,
         enumerable: false,
@@ -42,13 +41,14 @@ class Router {
 
   @bound
   route(path, options = {}) {
+    const { routes, controllers } = this;
     const { method, action } = options;
-    const routes = this[routesKey];
+
     const route = new Route({
       path,
       method,
       action,
-      controllers: this.controllers
+      controllers
     });
 
     routes.set(`${route.method}:/${route.staticPath}`, route);
@@ -106,7 +106,7 @@ class Router {
     tryCatch(async () => {
       let i, data, handler;
       const { handlers } = route;
-      const { method, session } = req;
+      const { method } = req;
 
       for (i = 0; i < handlers.length; i++) {
         handler = handlers[i];
@@ -115,13 +115,6 @@ class Router {
         if (data === false) {
           return this.unauthorized(req, res);
         }
-      }
-
-      if (session.didChange) {
-        res.setHeader(
-          'Set-Cookie',
-          `${session.sessionKey}=${session.cookie}; path=/`
-        );
       }
 
       if (data) {
@@ -152,6 +145,8 @@ class Router {
 
   error(err, req, res) {
     const { message } = err;
+
+    console.error(err);
 
     if (message.indexOf('Validation failed') === 0) {
       res.statusCode = 403;
@@ -201,7 +196,7 @@ class Router {
   }
 
   *createResolver() {
-    const routes = this[routesKey];
+    const { routes } = this;
     const idPattern = /(?![\=])(\d+)/g;
 
     for (;;) {

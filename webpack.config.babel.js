@@ -1,17 +1,17 @@
-import path from 'path';
-import webpack from 'webpack';
-import { readdirSync } from 'fs';
+const path = require('path');
+const webpack = require('webpack');
+const { readdirSync } = require('fs');
 
 const externals = readdirSync('node_modules')
   .filter(pkg => !/\.bin/g.test(pkg))
   .reduce((hash, pkg) => {
     return {
       ...hash,
-      [pkg]: `commonjs ${pkg}`
+      [pkg]: pkg
     };
   }, {});
 
-export default {
+module.exports = {
   externals,
   entry: './src/index.js',
   target: 'node',
@@ -20,25 +20,16 @@ export default {
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'index.js',
-    libraryTarget: 'commonjs2'
+    libraryTarget: 'commonjs'
   },
 
   plugins: [
-    new webpack.BannerPlugin('var external = require;', {
+    new webpack.BannerPlugin({
       raw: true,
-      entryOnly: true
-    }),
+      entryOnly: true,
 
-    new webpack.BannerPlugin('require(\'source-map-support\').install();', {
-       raw: true,
-       entryOnly: true
-    }),
-
-    new webpack.optimize.UglifyJsPlugin({
-      compressor: {
-        screw_ie8: true,
-        warnings: false
-      }
+      banner: '\'use strict\'; require(\'source-map-support\').install(); ' +
+        'const external = require;',
     })
   ],
 
@@ -46,9 +37,8 @@ export default {
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel-loader',
-        include: path.join(__dirname, 'src'),
-        exclude: path.join(__dirname, 'lib')
+        loader: 'babel',
+        exclude: /node_modules/
       },
 
       {

@@ -1,1 +1,1 @@
-export ModuleMissingError from './module-missing';
+export { default as ModuleMissingError } from './module-missing';

@@ -1,12 +1,18 @@
 {
-  "presets": [
-    "es2015",
-    "stage-1"
-  ],
   "plugins": [
     "syntax-flow",
+    "transform-es2015-modules-commonjs",
     "transform-decorators-legacy",
     "transform-flow-strip-types",
-    "transform-runtime"
+    "transform-class-properties",
+    "transform-es2015-classes",
+    "transform-es2015-destructuring",
+    "transform-es2015-parameters",
+    "transform-es2015-spread",
+    "transform-decorators",
+    "syntax-trailing-function-commas",
+    "transform-object-rest-spread",
+    "transform-async-to-generator",
+    "transform-exponentiation-operator"
   ]
 }

@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import { parse as parseQueryString } from 'querystring';
 
 export default function bodyParser(req) {

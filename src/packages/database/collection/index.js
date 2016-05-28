@@ -1,6 +1,5 @@
 import insert from './utils/insert';
-
-const { entries } = Object;
+import entries from '../../../utils/entries';
 
 /**
  * @private

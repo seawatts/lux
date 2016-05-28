@@ -30,17 +30,13 @@ class Application {
     path = PWD,
     port = PORT || 4000,
     domain = 'http://localhost',
-    logger,
-    sessionKey,
-    sessionSecret
+    logger
   } = {}) {
     const router = new Router();
 
     const server = new Server({
       router,
-      logger,
-      sessionKey,
-      sessionSecret
+      logger
     });
 
     const store = new Database({
@@ -179,8 +175,7 @@ class Application {
 
     routes.get('routes').call(null, router.route, router.resource);
 
-    server.listen(port);
-    server.instance.once('listening', () => {
+    server.instance.listen(port).once('listening', () => {
       if (isMaster) {
         process.emit('ready');
       } else {

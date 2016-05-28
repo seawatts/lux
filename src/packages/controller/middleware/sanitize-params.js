@@ -1,9 +1,10 @@
 import { camelize } from 'inflection';
 
 import pick from '../../../utils/pick';
+import entries from '../../../utils/entries';
 
 const { isArray } = Array;
-const { entries, assign } = Object;
+const { assign } = Object;
 
 export default function sanitizeParams(req, res) {
   const { modelName, model: { relationshipNames } } = this;

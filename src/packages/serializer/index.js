@@ -2,6 +2,8 @@
 import { Readable } from 'stream';
 import { dasherize, pluralize, camelize } from 'inflection';
 
+import { Model } from '../database';
+
 import tryCatch from '../../utils/try-catch';
 import underscore from '../../utils/underscore';
 
@@ -23,20 +25,20 @@ class Serializer {
    * PostsSerializer.model
    * // => Post
    *
-   * @member model
+   * @property model
    * @memberof Serializer
    * @instance
    * @readonly
    * @private
    */
-  model: any;
+  model: typeof Model;
 
   /**
    * The public domain where an `Application` instance is located. This is
    * defined in ./config/environments/{{NODE_ENV}.js} and is primarily used for
    * creating `links` resource objects.
    *
-   * @member domain
+   * @property domain
    * @memberof Serializer
    * @instance
    * @readonly
@@ -49,13 +51,13 @@ class Serializer {
    * used when a `Serializer` instance has to serialize an embedded
    * relationship.
    *
-   * @member serializers
+   * @property serializers
    * @memberof Serializer
    * @instance
    * @readonly
    * @private
    */
-  serializers: Map;
+  serializers: Map<string, Serializer>;
 
   /**
    * An Array of the `hasOne` or `belongsTo` relationships on a `Serializer`
@@ -105,10 +107,9 @@ class Serializer {
    *   }
    * }
    *
-   * @member hasOne
+   * @property hasOne
    * @memberof Serializer
    * @instance
-   * @type string[]
    */
   hasOne: Array<string> = [];
 
@@ -168,10 +169,9 @@ class Serializer {
    *   }
    * }
    *
-   * @member hasMany
+   * @property hasMany
    * @memberof Serializer
    * @instance
-   * @type string[]
    */
   hasMany: Array<string> = [];
 
@@ -215,10 +215,9 @@ class Serializer {
    *   }
    * }
    *
-   * @member attributes
+   * @property attributes
    * @memberof Serializer
    * @instance
-   * @type string[]
    */
   attributes: Array<string> = [];
 
@@ -230,9 +229,6 @@ class Serializer {
    * manually. Serializers are instantiated automatically by your application
    * when it is started.
    *
-   * @method constructor
-   * @param {Object} [props={}] An object containing the model, domain, and
-   * serializers to install on the `Serializer` instance.
    * @private
    */
    constructor({
@@ -240,9 +236,9 @@ class Serializer {
      domain,
      serializers
    }: {
-     model: any,
+     model: typeof Model,
      domain: string,
-     serializers: Map
+     serializers: Map<string, Serializer>
    } = {}) {
      defineProperties(this, {
        model: {
@@ -271,7 +267,6 @@ class Serializer {
    }
 
   /**
-   * @method formatKey
    * @private
    */
   formatKey(key: string): string {
@@ -279,7 +274,6 @@ class Serializer {
   }
 
   /**
-   * @method fieldsFor
    * @private
    */
   fieldsFor(name: string, fields: Object = {}): Array<string> {
@@ -289,10 +283,9 @@ class Serializer {
   }
 
   /**
-   * @method attributesFor
    * @private
    */
-   attributesFor(item: Object, fields: Array<string> = []): Object {
+   attributesFor(item: Model, fields: Array<string> = []): Object {
      return (fields.length ? fields : this.attributes)
        .reduce((hash, attr) => {
          if (attr.indexOf('id') < 0) {
@@ -304,11 +297,10 @@ class Serializer {
    }
 
    /**
-    * @method relationshipsFor
     * @private
     */
    relationshipsFor(
-     item: any,
+     item: Model,
      include: Array<any>,
      fields: Object
    ): Object {
@@ -317,11 +309,11 @@ class Serializer {
 
     hash.data = {
       ...hasOne.reduce((obj, key) => {
-        const related = item[key];
+        const related: ?Model = item[key];
 
         if (related) {
-          const { id, modelName } = related;
-          const type = pluralize(modelName);
+          const { id, modelName }: { id: number, modelName: string } = related;
+          const type: string = pluralize(modelName);
 
           obj[key] = {
             data: {
@@ -353,13 +345,20 @@ class Serializer {
       }, {}),
 
       ...hasMany.reduce((obj, key) => {
-        const records = item[key];
+        const records: ?Array<Model> = item[key];
 
         if (records && records.length) {
           obj[key] = {
             data: records.map(related => {
-              const { id, modelName } = related;
-              const type = pluralize(modelName);
+              const {
+                id,
+                modelName
+              }: {
+                id: number,
+                modelName: string
+              } = related;
+
+              const type: string = pluralize(modelName);
 
               if (include.indexOf(key) >= 0) {
                 const {
@@ -395,21 +394,20 @@ class Serializer {
   }
 
   /**
-   * @method serializeGroup
    * @private
    */
   serializeGroup(
     stream: Readable,
     key: string,
-    data: any,
-    include: any,
-    fields: any
+    data: Array<Model> | Model,
+    include: Array<any>,
+    fields: Object
   ): void {
     stream.push(`"${this.formatKey(key)}":`);
 
     if (key === 'data') {
-      let included = [];
-      let lastItemIndex;
+      let included: Array<Object> = [];
+      let lastItemIndex: number;
 
       if (isArray(data)) {
         lastItemIndex = max(data.length - 1, 0);
@@ -420,9 +418,15 @@ class Serializer {
           let item = this.serializeOne(data[i], include, fields);
 
           if (item.included && item.included.length) {
-            included = item.included.reduce((value, record) => {
-              const { id, type } = record;
-              const shouldInclude = !value.some(({ id: vId, type: vType }) => {
+            included = item.included.reduce((value, record: Object) => {
+              const { id, type }: { id: number, type: string } = record;
+              const shouldInclude = !value.some(({
+                id: vId,
+                type: vType
+              }: {
+                id: number,
+                type: string
+              }) => {
                 return vId === id && vType === type;
               });
 
@@ -447,16 +451,18 @@ class Serializer {
 
         stream.push(']');
       } else {
-        data = this.serializeOne(data, include, fields, false);
+        if (data instanceof Object) {
+          data = this.serializeOne(data, include, fields, false);
 
-        if (data.included && data.included.length) {
-          included = [...included, ...data.included];
-          delete data.included;
+          if (data.included && data.included.length) {
+            included = [...included, ...data.included];
+            delete data.included;
+          }
+
+          stream.push(
+            JSON.stringify(data)
+          );
         }
-
-        stream.push(
-          JSON.stringify(data)
-        );
       }
 
       if (included.length) {
@@ -482,31 +488,32 @@ class Serializer {
   }
 
   /**
-   * @method serializePayload
    * @private
    */
   async serializePayload(
     stream: Readable,
-    payload: any,
-    include: any,
-    fields: any
+    payload: Object,
+    include: Array<any>,
+    fields: Object
   ): Promise<Readable> {
     tryCatch(() => {
-      let i, key, payloadKeys;
+      const payloadKeys: Array<string> = keys(payload);
+      let i: number;
 
       stream.push('{');
 
-      payloadKeys = keys(payload);
-
       for (i = 0; i < payloadKeys.length; i++) {
-        key = payloadKeys[i];
+        const key: string = payloadKeys[i];
+        const value: ?Object = payload[key];
 
-        this.serializeGroup(stream, key, payload[key], include, fields);
-        stream.push(',');
+        if (value) {
+          this.serializeGroup(stream, key, value, include, fields);
+          stream.push(',');
+        }
       }
 
       stream.push('"jsonapi":{"version":"1.0"}}');
-    }, err => {
+    }, (err: Error) => {
       console.error(err);
     });
 
@@ -516,10 +523,9 @@ class Serializer {
   }
 
   /**
-   * @method stream
    * @private
    */
-  stream(payload: any, include: any, fields: any): Readable {
+  stream(payload: Object, include: Array<any>, fields: Object): Readable {
     const stream: Readable = new Readable({
       encoding: 'utf8'
     });
@@ -531,12 +537,11 @@ class Serializer {
 
   @bound
   /**
-   * @method serializeOne
    * @private
    */
   serializeOne(
-    item: Object,
-    include: any,
+    item: Model,
+    include: Array<any>,
     fields: Object,
     links: boolean = true
   ): Object {

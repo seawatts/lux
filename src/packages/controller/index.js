@@ -1,30 +1,90 @@
 import Promise from 'bluebird';
+import Serializer from '../serializer';
 
+import omit from '../../utils/omit';
 import formatInclude from './utils/format-include';
 import createPageLinks from './utils/create-page-links';
 
 import action from './decorators/action';
 
-const { isArray } = Array;
+import type Database, { Model } from '../database';
+import type { Request } from 'server';
+
 const { defineProperties } = Object;
 
+/**
+ *
+ */
 class Controller {
-  store;
-  model;
-  domain;
-  modelName;
-  middleware;
-  attributes;
-  serializer;
-  serializers;
-  parentController;
+  /**
+   *
+   */
+  params: Array<string> = [];
 
-  params = [];
-  beforeAction = [];
-  defaultPerPage = 25;
+  /**
+   *
+   */
+  beforeAction: Array<Function> = [];
 
-  _sort = [];
-  _filter = [];
+  /**
+   *
+   */
+  defaultPerPage: number = 25;
+
+  /**
+   * @private
+   */
+  store: Database;
+
+  /**
+   * @private
+   */
+  model: typeof Model;
+
+  /**
+   * @private
+   */
+  domain: string;
+
+  /**
+   * @private
+   */
+  modelName: string;
+
+  /**
+   * @private
+   */
+  attributes: Array<string>;
+
+  /**
+   * @private
+   */
+  relationships: Array<string>;
+
+  /**
+   * @private
+   */
+  serializer: Serializer;
+
+  /**
+   * @private
+   */
+  serializers: Map<string, Serializer>;
+
+  /**
+   * @private
+   */
+  parentController: ?Controller;
+
+  /**
+   * @private
+   */
+  _sort: Array<string> = [];
+
+  /**
+   * @private
+   */
+  _filter: Array<string> = [];
 
   constructor({
     store,
@@ -33,6 +93,13 @@ class Controller {
     serializer,
     serializers = new Map(),
     parentController
+  }: {
+    store: Database,
+    model: ?Model,
+    domain: string,
+    serializer: Serializer,
+    serializers: Map<string, Serializer>,
+    parentController: ?Controller
   }) {
     let attributes = [];
     let relationships = [];
@@ -40,6 +107,7 @@ class Controller {
     if (model && serializer) {
       const { primaryKey, attributeNames, relationshipNames } = model;
       const { attributes: serializedAttributes } = serializer;
+
       const serializedRelationships = [
         ...serializer.hasOne,
         ...serializer.hasMany
@@ -122,31 +190,36 @@ class Controller {
     return this;
   }
 
-  get sort() {
+  /**
+   *
+   */
+  get sort(): Array<string> {
     const { attributes, _sort: sort } = this;
 
     return sort.length ? sort : attributes;
   }
 
-  set sort(value = []) {
-    if (isArray(value)) {
-      this._sort = value;
-    }
+  set sort(value: Array<string>): void {
+    this._sort = value;
   }
 
-  get filter() {
+  /**
+   *
+   */
+  get filter(): Array<string> {
     const { attributes, _filter: filter } = this;
 
     return filter.length ? filter : attributes;
   }
 
-  set filter(value = []) {
-    if (isArray(value)) {
-      this._filter = value;
-    }
+  set filter(value: Array<string>): void {
+    this._filter = value;
   }
 
-  get middleware() {
+  /**
+   * @private
+   */
+  get middleware(): Array<Function> {
     const { beforeAction, parentController } = this;
 
     if (parentController) {
@@ -160,21 +233,24 @@ class Controller {
   }
 
   @action
-  async index(req) {
+  /**
+   *
+   */
+  async index(req: Request): Promise<Object> {
     const { url, params } = req;
-    const { model, domain, relationships } = this;
+    const { model, modelName, domain, relationships } = this;
 
     let {
       page,
       limit,
+      fields,
       include = [],
       sort: order,
-      filter: where,
-      fields: {
-        [model.modelName]: select,
-        ...includedFields
-      }
+      filter: where
     } = params;
+
+    let select = fields[modelName];
+    let includedFields = omit(fields, modelName);
 
     if (!limit) {
       limit = this.defaultPerPage;
@@ -186,7 +262,7 @@ class Controller {
 
     include = formatInclude(model, include, includedFields, relationships);
 
-    const [count, data] = await Promise.all([
+    const [count, data]: [number, Array<Model>] = await Promise.all([
       model.count(where),
 
       model.findAll({
@@ -210,7 +286,10 @@ class Controller {
   }
 
   @action
-  show(req) {
+  /**
+   *
+   */
+  show(req: Request): {} {
     let { url, record: data } = req;
     let links;
 
@@ -225,7 +304,7 @@ class Controller {
   }
 
   @action
-  async create(req) {
+  async create(req: Request): Promise<Object> {
     const { domain, model } = this;
 
     const {
@@ -251,7 +330,7 @@ class Controller {
   }
 
   @action
-  async update(req) {
+  async update(req: Request): Promise<Object> {
     const { domain } = this;
 
     const {
@@ -283,7 +362,7 @@ class Controller {
   }
 
   @action
-  async destroy(req) {
+  async destroy(req: Request): Promise<Object> {
     const { domain } = this;
     const { url: { pathname }, record: data } = req;
     let links;
@@ -300,12 +379,12 @@ class Controller {
   }
 
   @action
-  preflight() {
+  preflight(): {} {
     return {
       data: true
     };
   }
 }
 
-export action from './decorators/action';
+export { default as action } from './decorators/action';
 export default Controller;

@@ -1,6 +1,6 @@
-import Lux from '../../../dist';
+import { Application } from '../../../dist';
 
-class TestApp extends Lux {
+class TestApp extends Application {
 
 }
 

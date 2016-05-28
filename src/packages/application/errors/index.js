@@ -1,2 +1,2 @@
-export ControllerMissingError from './controller-missing';
-export SerializerMissingError from './serializer-missing';
+export { default as ControllerMissingError } from './controller-missing';
+export { default as SerializerMissingError } from './serializer-missing';

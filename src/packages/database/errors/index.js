@@ -1,3 +1,3 @@
-export InvalidDriverError from './invalid-driver';
-export ModelMissingError from './model-missing';
-export MigrationsPendingError from './migrations-pending';
+export { default as InvalidDriverError } from './invalid-driver';
+export { default as ModelMissingError } from './model-missing';
+export { default as MigrationsPendingError } from './migrations-pending';

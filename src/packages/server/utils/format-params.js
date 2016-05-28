@@ -2,9 +2,11 @@ import moment from 'moment';
 import { camelize } from 'inflection';
 
 import bodyParser from './body-parser';
+
+import entries from '../../../utils/entries';
 import camelizeKeys from '../../../utils/camelize-keys';
 
-const { assign, entries } = Object;
+const { assign } = Object;
 const { isArray } = Array;
 
 const int = /^\d+$/g;

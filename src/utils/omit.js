@@ -1,12 +1,16 @@
-const { keys } = Object;
+/* @flow */
+import entries from './entries';
 
-export default function omit(obj, ...omitted) {
-  return keys(obj)
-    .filter(key => omitted.indexOf(key) < 0)
-    .reduce((result, key) => {
-      const value = obj[key];
-
-      return typeof value === 'undefined' ? result : {
+/**
+ * @private
+ */
+ export default function omit(source: {}, ...omitted: Array<string>) {
+  return entries(source)
+    .filter(([key, value]: [string, mixed]): boolean => {
+      return omitted.indexOf(key) < 0;
+    })
+    .reduce((result: {}, [key, value]: [string, mixed]): {} => {
+      return {
         ...result,
         [key]: value
       };

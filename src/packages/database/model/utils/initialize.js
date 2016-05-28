@@ -1,10 +1,11 @@
 import { camelize, dasherize, singularize } from 'inflection';
 
 import { line } from '../../../logger';
+import entries from '../../../../utils/entries';
 import underscore from '../../../../utils/underscore';
 
 const { isArray } = Array;
-const { create, defineProperties, entries, keys } = Object;
+const { create, defineProperties, keys } = Object;
 
 const REFS = new WeakMap();
 

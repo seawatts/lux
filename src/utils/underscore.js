@@ -1,9 +1,9 @@
 /* @flow */
-import inflection from 'inflection';
+import { underscore as _ } from 'inflection';
 
 export default function underscore(
   source: string = '',
   upper: boolean = false
 ): string {
-  return inflection.underscore(source, upper).replace(/-/g, '_');
+  return _(source, upper).replace(/-/g, '_');
 }

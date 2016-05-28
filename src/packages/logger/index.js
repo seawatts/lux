@@ -121,6 +121,6 @@ class Logger {
   }
 }
 
-export line from './utils/line';
-export sql from './utils/sql';
+export { default as line } from './utils/line';
+export { default as sql } from './utils/sql';
 export default Logger;

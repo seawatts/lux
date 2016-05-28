@@ -3,7 +3,6 @@ import { parse as parseURL } from 'url';
 
 import chalk, { cyan } from 'chalk';
 
-import Session from '../session';
 import { line } from '../logger';
 
 import formatParams from './utils/format-params';
@@ -14,7 +13,7 @@ class Server {
   logger;
   instance;
 
-  constructor({ logger, router, sessionKey, sessionSecret } = {}) {
+  constructor({ logger, router } = {}) {
     const resolver = router.createResolver();
     const instance = http.createServer(async (req, res) => {
       const { headers } = req;
@@ -23,7 +22,6 @@ class Server {
       this.logRequest(req, res);
 
       req.setEncoding('utf8');
-
       res.setHeader('Content-Type', 'application/vnd.api+json');
 
       if (methodOverride) {
@@ -32,12 +30,6 @@ class Server {
 
       req.url = parseURL(req.url, true);
       req.params = await formatParams(req);
-      req.session = new Session({
-        cookie: headers.cookie,
-        logger,
-        sessionKey,
-        sessionSecret
-      });
 
       resolver.next().value(req, res);
     });

@@ -1,5 +1,4 @@
 import Promise from 'bluebird';
-
 import formatSelect from './format-select';
 import { sql } from '../../../logger';
 

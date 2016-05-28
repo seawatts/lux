@@ -1,3 +1,4 @@
+/* @flow */
 import Promise from 'bluebird';
 import cluster from 'cluster';
 
@@ -6,7 +7,8 @@ import {
   MigrationsPendingError
 } from './errors';
 
-import { initialize } from './model';
+import Logger from '../logger';
+import Model, { initialize } from './model';
 
 import connect from './utils/connect';
 import createMigrations from './utils/create-migrations';
@@ -21,20 +23,59 @@ const { defineProperties } = Object;
 const { worker, isMaster } = cluster;
 const { env: { PWD, NODE_ENV: environment = 'development' } } = process;
 
+/**
+ * @private
+ */
 class Database {
-  path;
-  debug;
-  logger;
-  config;
-  connection;
+  /**
+   * @private
+   */
+  path: string;
+
+  /**
+   * @private
+   */
+  debug: boolean;
+
+  /**
+   * @private
+   */
+  logger: Logger;
+
+  /**
+   * @private
+   */
+  config: Object;
+
+  /**
+   * @private
+   */
+  connection: any;
 
   @readonly
   @nonenumerable
   @nonconfigurable
-  models = new Map();
+  /**
+   * @private
+   */
+  models: Map<string, typeof Model> = new Map();
 
-  constructor({ path = PWD, logger, config: { [environment]: config } }) {
-    const { debug = environment === 'development' } = config;
+  constructor({
+    path = PWD,
+    config,
+    logger,
+  } : {
+    path: string,
+    config: Object,
+    logger: Logger,
+  } = {}) {
+    config = config[environment];
+
+    const {
+      debug = (environment === 'development')
+    }: {
+      debug: boolean
+    } = config;
 
     defineProperties(this, {
       path: {
@@ -77,7 +118,10 @@ class Database {
   }
 
   @bound
-  schema() {
+  /**
+   * @private
+   */
+  schema(): Function {
     const {
       connection: {
         schema
@@ -87,8 +131,11 @@ class Database {
     return schema;
   }
 
-  modelFor(type) {
-    const model = this.models.get(type);
+  /**
+   * @private
+   */
+  modelFor(type: string): typeof Model  {
+    const model: typeof Model = this.models.get(type);
 
     if (!model) {
       throw new ModelMissingError(type);
@@ -97,7 +144,12 @@ class Database {
     return model;
   }
 
-  async define(models) {
+  /**
+   * @private
+   */
+  async define(
+    models: Map<string, typeof Model>
+  ): Promise<Model[]> {
     const { path, connection, schema } = this;
 
     if (isMaster || worker && worker.id === 1) {
@@ -117,7 +169,8 @@ class Database {
     });
 
     return await Promise.all(
-      [...models.values()]
+      Array
+        .from(models.values())
         .map(model => {
           return initialize(this, model, () => {
             return connection(model.tableName);
@@ -127,9 +180,9 @@ class Database {
   }
 }
 
-export connect from './utils/connect';
-export createMigrations from './utils/create-migrations';
-export pendingMigrations from './utils/pending-migrations';
+export { default as connect } from './utils/connect';
+export { default as createMigrations } from './utils/create-migrations';
+export { default as pendingMigrations } from './utils/pending-migrations';
 
-export Model from './model';
+export { default as Model } from './model';
 export default Database;

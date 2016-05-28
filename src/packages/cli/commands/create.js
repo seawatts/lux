@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import Ora from 'ora';
 import { green } from 'chalk';
 

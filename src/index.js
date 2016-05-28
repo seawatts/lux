@@ -1,7 +1,6 @@
-export CLI from './packages/cli';
+export { default as CLI } from './packages/cli';
 
 export { Model } from './packages/database';
-export Serializer from './packages/serializer';
-export Controller, { action } from './packages/controller';
-
-export default from './packages/application';
+export { default as Controller, action } from './packages/controller';
+export { default as Serializer } from './packages/serializer';
+export { default as Application } from './packages/application';

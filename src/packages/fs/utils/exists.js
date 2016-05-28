@@ -1,4 +1,3 @@
-import Promise from 'bluebird';
 import { stat, readdir } from 'fs';
 
 export default function exists(path, dir) {

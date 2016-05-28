@@ -8,4 +8,6 @@ test/*
 node_modules/*
 
 # misc
+decl/*
 examples/*
+src/**/decl.js
