@@ -1,6 +1,6 @@
-import { IncomingMessage } from 'http';
+import { http$IncomingMessage, http$ServerResponse } from 'http';
 
-import type { Model } from '../src/packages/database';
+import { Model } from '../src/packages/database';
 
 type params = {
   data?: {
@@ -34,8 +34,14 @@ type url = {
   href: string;
 };
 
-declare module 'server' {
-  declare class Request mixins IncomingMessage {
+declare module 'http' {
+  declare class IncomingMessage extends http$IncomingMessage {
+    params: params;
+    record?: Model;
+    url: url;
+  }
+
+  declare class ServerResponse extends http$ServerResponse {
     params: params;
     record?: Model;
     url: url;

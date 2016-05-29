@@ -27,37 +27,15 @@ const { env: { PWD, NODE_ENV: environment = 'development' } } = process;
  * @private
  */
 class Database {
-  /**
-   * @private
-   */
   path: string;
-
-  /**
-   * @private
-   */
   debug: boolean;
-
-  /**
-   * @private
-   */
   logger: Logger;
-
-  /**
-   * @private
-   */
   config: Object;
-
-  /**
-   * @private
-   */
   connection: any;
 
   @readonly
   @nonenumerable
   @nonconfigurable
-  /**
-   * @private
-   */
   models: Map<string, typeof Model> = new Map();
 
   constructor({
@@ -118,9 +96,6 @@ class Database {
   }
 
   @bound
-  /**
-   * @private
-   */
   schema(): Function {
     const {
       connection: {
@@ -131,9 +106,6 @@ class Database {
     return schema;
   }
 
-  /**
-   * @private
-   */
   modelFor(type: string): typeof Model  {
     const model: typeof Model = this.models.get(type);
 
@@ -144,9 +116,6 @@ class Database {
     return model;
   }
 
-  /**
-   * @private
-   */
   async define(
     models: Map<string, typeof Model>
   ): Promise<Model[]> {
@@ -185,4 +154,5 @@ export { default as createMigrations } from './utils/create-migrations';
 export { default as pendingMigrations } from './utils/pending-migrations';
 
 export { default as Model } from './model';
+export { default as Collection } from './collection';
 export default Database;

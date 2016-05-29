@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 import cluster from 'cluster';
 
 import { cyan } from 'chalk';
@@ -13,8 +14,12 @@ const {
 } = process;
 
 export default async function serve(port = 4000) {
-  const Application = external(`${PWD}/bin/app`);
-  const config = external(`${PWD}/config/environments/${NODE_ENV}`).default;
+  const dist = path.join(PWD, 'dist');
+  const Application = external(path.join(dist, 'app', 'index')).default;
+
+  const config = external(
+    path.join(dist, 'config', 'environments', NODE_ENV)
+  ).default;
 
   const logger = await Logger.create({
     enabled: config.log,

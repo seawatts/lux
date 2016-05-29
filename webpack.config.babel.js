@@ -15,7 +15,7 @@ module.exports = {
   externals,
   entry: './src/index.js',
   target: 'node',
-  devtool: 'sourcemap',
+  devtool: 'source-map',
 
   output: {
     path: path.join(__dirname, 'dist'),
@@ -26,10 +26,10 @@ module.exports = {
   plugins: [
     new webpack.BannerPlugin({
       raw: true,
-      entryOnly: true,
+      entryOnly: false,
 
-      banner: '\'use strict\'; require(\'source-map-support\').install(); ' +
-        'const external = require;',
+      banner: '\'use strict\';\nconst external = require;\n' +
+        'require(\'source-map-support\').install();\n'
     })
   ],
 
@@ -37,13 +37,13 @@ module.exports = {
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        loader: ['babel', 'eslint'],
         exclude: /node_modules/
       },
 
       {
         test: /\.json$/,
-        loader: 'json-loader'
+        loader: ['json']
       }
     ]
   }

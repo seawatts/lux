@@ -16,6 +16,8 @@ import {
 } from './commands';
 
 import tryCatch from '../../utils/try-catch';
+import { createCompiler, displayStats } from '../../utils/compiler';
+
 import { version as VERSION } from '../../../package.json';
 
 export default function CLI() {
@@ -63,13 +65,32 @@ export default function CLI() {
     .option('-e, --environment [env]', '(Default: development)')
     .option('-p, --port [port]', '(Default: 4000)')
     .action(async ({ environment = 'development', port = 4000 } = {}) => {
-      await tryCatch(async () => {
-        process.env.NODE_ENV = environment;
-        await serve(port);
-      }, err => {
+      const rescue = (err) => {
         console.error(err);
         exit(1);
-      });
+      };
+
+      await tryCatch(async () => {
+        const compiler = await createCompiler(PWD, environment);
+        let isRunning = false;
+
+        compiler.watch({
+          poll: false,
+          aggregateTimeout: 300
+        }, async (err, stats) => {
+          if (err) {
+            return rescue(err);
+          }
+
+          if (!isRunning) {
+            process.env.NODE_ENV = environment;
+            await serve(port);
+            isRunning = true;
+          }
+
+          displayStats(stats);
+        });
+      }, rescue);
     });
 
   cli

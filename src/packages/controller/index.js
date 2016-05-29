@@ -1,87 +1,170 @@
 import Promise from 'bluebird';
-import Serializer from '../serializer';
+
+import Model from '../database/model';
 
 import omit from '../../utils/omit';
+import getRecord from './utils/get-record';
 import formatInclude from './utils/format-include';
-import createPageLinks from './utils/create-page-links';
 
 import action from './decorators/action';
 
-import type Database, { Model } from '../database';
-import type { Request } from 'server';
+import type { IncomingMessage, ServerResponse } from 'http';
+
+import type Database, { Collection } from '../database';
+import type Serializer from '../serializer';
 
 const { defineProperties } = Object;
 
 /**
+ * The `Controller` class is responsible for taking in requests from the outside
+ * world and returning the appropriate response.
  *
+ * You can think of a `Controller` like a waiter or waitress at a restaurant.
+ * A client makes a request to an application, that request is routed to the
+ * appropriate `Controller` and then the `Controller` interprets the request
+ * and returns data relative to what the client has request.
  */
 class Controller {
   /**
+   * Whitelisted parameter keys to allow in incoming PATCH and POST requests.
    *
+   * For security reasons, parameters passed to controller actions from an
+   * incoming request must have their key whitelisted.
+   *
+   * @example
+   * class UsersController extends Controller {
+   *   // Do not allow incoming PATCH or POST requests to modify User#isAdmin.
+   *   params = [
+   *     'name',
+   *     'email',
+   *     'password',
+   *     // 'isAdmin'
+   *   ];
+   * }
+   *
+   * @property params
+   * @memberof Controller
+   * @instance
    */
   params: Array<string> = [];
 
   /**
+   * Middleware functions to execute on each request handled by a `Controller`.
    *
+   * Middleware functions declared in beforeAction on an `ApplicationController`
+   * will be executed before ALL route handlers.
+   *
+   * @property beforeAction
+   * @memberof Controller
+   * @instance
    */
   beforeAction: Array<Function> = [];
 
   /**
+   * The number of records to return for the #index action when a `?limit`
+   * parameter is not specified.
    *
+   * @property defaultPerPage
+   * @memberof Controller
+   * @instance
    */
   defaultPerPage: number = 25;
 
   /**
+   * @property store
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   store: Database;
 
   /**
+   * @property model
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   model: typeof Model;
 
   /**
+   * @property domain
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   domain: string;
 
   /**
+   * @property modelName
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   modelName: string;
 
   /**
+   * @property attributes
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   attributes: Array<string>;
 
   /**
+   * @property relationships
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   relationships: Array<string>;
 
   /**
+   * @property serializer
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   serializer: Serializer;
 
   /**
+   * @property serializers
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   serializers: Map<string, Serializer>;
 
   /**
+   * @property parentController
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   parentController: ?Controller;
 
   /**
+   * @property _sort
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   _sort: Array<string> = [];
 
   /**
+   * @property _filter
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   _filter: Array<string> = [];
@@ -95,7 +178,7 @@ class Controller {
     parentController
   }: {
     store: Database,
-    model: ?Model,
+    model: ?Model<T>,
     domain: string,
     serializer: Serializer,
     serializers: Map<string, Serializer>,
@@ -125,14 +208,14 @@ class Controller {
     defineProperties(this, {
       model: {
         value: model,
-        writable: false,
+        writable: true,
         enumerable: true,
         configurable: false
       },
 
       serializer: {
         value: serializer,
-        writable: false,
+        writable: true,
         enumerable: true,
         configurable: false
       },
@@ -153,35 +236,35 @@ class Controller {
 
       modelName: {
         value: model ? model.modelName : null,
-        writable: false,
+        writable: true,
         enumerable: false,
         configurable: false
       },
 
       attributes: {
         value: attributes,
-        writable: false,
+        writable: true,
         enumerable: false,
         configurable: false
       },
 
       relationships: {
         value: relationships,
-        writable: false,
+        writable: true,
         enumerable: false,
         configurable: false
       },
 
       serializers: {
         value: serializers,
-        writable: false,
+        writable: true,
         enumerable: false,
         configurable: false
       },
 
       parentController: {
         value: parentController,
-        writable: false,
+        writable: true,
         enumerable: false,
         configurable: false
       }
@@ -191,7 +274,14 @@ class Controller {
   }
 
   /**
+   * Whitelisted `?sort` parameter values.
    *
+   * If you do not override this property all of the attributes of the Model
+   * that this Controller represents will be valid.
+   *
+   * @property sort
+   * @memberof Controller
+   * @instance
    */
   get sort(): Array<string> {
     const { attributes, _sort: sort } = this;
@@ -204,7 +294,14 @@ class Controller {
   }
 
   /**
+   * Whitelisted `?filter[{key}]` parameter keys.
    *
+   * If you do not override this property all of the attributes of the Model
+   * that this Controller represents will be valid.
+   *
+   * @property filter
+   * @memberof Controller
+   * @instance
    */
   get filter(): Array<string> {
     const { attributes, _filter: filter } = this;
@@ -217,6 +314,10 @@ class Controller {
   }
 
   /**
+   * @property middleware
+   * @memberof Controller
+   * @instance
+   * @readonly
    * @private
    */
   get middleware(): Array<Function> {
@@ -236,24 +337,26 @@ class Controller {
   /**
    *
    */
-  async index(req: Request): Promise<Object> {
-    const { url, params } = req;
-    const { model, modelName, domain, relationships } = this;
+  async index(req: IncomingMessage, res: ServerResponse): Promise<Collection> {
+    const { model, modelName, relationships } = this;
 
     let {
-      page,
-      limit,
-      fields,
-      include = [],
-      sort: order,
-      filter: where
-    } = params;
+      params: {
+        page,
+        limit,
+        fields,
+        include = [],
+        sort: order,
+        filter: where
+      }
+    } = req;
 
     let select = fields[modelName];
     let includedFields = omit(fields, modelName);
 
     if (!limit) {
       limit = this.defaultPerPage;
+      req.params.limit = limit;
     }
 
     if (!select) {
@@ -262,127 +365,82 @@ class Controller {
 
     include = formatInclude(model, include, includedFields, relationships);
 
-    const [count, data]: [number, Array<Model>] = await Promise.all([
-      model.count(where),
-
-      model.findAll({
-        page,
-        limit,
-        where,
-        order,
-        select,
-        include
-      })
-    ]);
-
-    return {
-      data,
-
-      links: {
-        self: domain + url.path,
-        ...createPageLinks(domain, url.pathname, { ...params, limit }, count)
-      }
-    };
+    return await model.findAll({
+      page,
+      limit,
+      where,
+      order,
+      select,
+      include
+    }, true);
   }
 
   @action
   /**
    *
    */
-  show(req: Request): {} {
-    let { url, record: data } = req;
-    let links;
-
-    if (data) {
-      links = { self: this.domain + url.path };
-    }
-
-    return {
-      data,
-      links
-    };
+  show(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
+    return getRecord(this, req, res);
   }
 
   @action
-  async create(req: Request): Promise<Object> {
-    const { domain, model } = this;
-
+  /**
+   *
+   */
+  async create(req: IncomingMessage, res: ServerResponse): Promise<Model> {
     const {
-      url: {
-        pathname
-      },
-
       params: {
         data: {
-          attributes,
-          // relationships
+          attributes
         }
       }
     } = req;
 
-    return {
-      data: await model.create(attributes),
-
-      links: {
-        self: domain + pathname
-      }
-    };
+    return await this.model.create(attributes);
   }
 
   @action
-  async update(req: Request): Promise<Object> {
-    const { domain } = this;
+  /**
+   *
+   */
+  async update(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
+    const record = await getRecord(this, req, res);
 
     const {
-      record: data,
-
-      url: {
-        pathname
-      },
-
       params: {
         data: {
-          attributes,
-          // relationships
+          attributes
         }
       }
     } = req;
 
-    let links;
-
-    if (data) {
-      links = { self: domain + pathname };
-      await data.update(attributes);
+    if (record) {
+      await record.update(attributes);
     }
 
-    return {
-      data,
-      links
-    };
+    return record;
   }
 
   @action
-  async destroy(req: Request): Promise<Object> {
-    const { domain } = this;
-    const { url: { pathname }, record: data } = req;
-    let links;
+  /**
+   *
+   */
+  async destroy(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
+    const record = await getRecord(this, req, res);
 
-    if (data) {
-      links = { self: domain + pathname };
-      await data.destroy();
+    if (record) {
+      await record.destroy();
     }
 
-    return {
-      data,
-      links
-    };
+    return record;
   }
 
   @action
-  preflight(): {} {
-    return {
-      data: true
-    };
+  /**
+   *
+   */
+  preflight(req: IncomingMessage, res: ServerResponse): boolean {
+    return true;
   }
 }
 

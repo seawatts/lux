@@ -46,6 +46,7 @@ export default async function tryCatch(
 /**
  * A syncronous implementation of the `tryCatch` utility.
  *
+ * @example
  * const luckyNumber = tryCatchSync(() => {
  *   const n = Math.floor(Math.random() * 6);
  *

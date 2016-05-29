@@ -1,9 +1,7 @@
 {
   "plugins": [
-    "transform-es2015-modules-commonjs",
     "transform-decorators-legacy",
     "transform-class-properties",
-    "transform-es2015-classes",
     "transform-es2015-destructuring",
     "transform-es2015-parameters",
     "transform-es2015-spread",

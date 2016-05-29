@@ -6,7 +6,11 @@ import tryCatch from '../../utils/try-catch';
 import bound from '../../decorators/bound';
 
 const { defineProperties } = Object;
+const idPattern = /(?![\=])(\d+)/g;
 
+/**
+ * @private
+ */
 class Router {
   routes;
   serializer;
@@ -102,6 +106,31 @@ class Router {
     });
   }
 
+  resolve(req, res) {
+    const { routes } = this;
+    const { pathname } = req.url;
+    const staticPath = pathname.replace(idPattern, ':dynamic');
+
+    const route = routes.get(`${req.method}:${staticPath}`);
+
+    if (route && route.handlers) {
+      const { dynamicSegments } = route;
+      const ids = (pathname.match(idPattern) || []);
+
+      for (let i = 0; i < ids.length; i++) {
+        let key = dynamicSegments[i];
+
+        if (key) {
+          req.params[key] = parseInt(ids[i], 10);
+        }
+      }
+
+      this.visit(req, res, route);
+    } else {
+      this.notFound(req, res);
+    }
+  }
+
   visit(req, res, route) {
     tryCatch(async () => {
       let i, data, handler;
@@ -193,37 +222,6 @@ class Router {
     res.statusCode = 204;
     res.removeHeader('Content-Type');
     res.end();
-  }
-
-  *createResolver() {
-    const { routes } = this;
-    const idPattern = /(?![\=])(\d+)/g;
-
-    for (;;) {
-      yield (req, res) => {
-        const { pathname } = req.url;
-        const staticPath = pathname.replace(idPattern, ':dynamic');
-
-        const route = routes.get(`${req.method}:${staticPath}`);
-
-        if (route && route.handlers) {
-          const { dynamicSegments } = route;
-          const ids = (pathname.match(idPattern) || []);
-
-          for (let i = 0; i < ids.length; i++) {
-            let key = dynamicSegments[i];
-
-            if (key) {
-              req.params[key] = parseInt(ids[i], 10);
-            }
-          }
-
-          this.visit(req, res, route);
-        } else {
-          this.notFound(req, res);
-        }
-      };
-    }
   }
 }
 

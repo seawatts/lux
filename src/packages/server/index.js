@@ -9,32 +9,27 @@ import formatParams from './utils/format-params';
 
 const { defineProperties } = Object;
 
+/**
+ * @private
+ */
 class Server {
+  router;
   logger;
   instance;
 
   constructor({ logger, router } = {}) {
-    const resolver = router.createResolver();
-    const instance = http.createServer(async (req, res) => {
-      const { headers } = req;
-      const methodOverride = headers['X-HTTP-Method-Override'];
-
-      this.logRequest(req, res);
-
-      req.setEncoding('utf8');
-      res.setHeader('Content-Type', 'application/vnd.api+json');
-
-      if (methodOverride) {
-        req.method = methodOverride;
-      }
-
-      req.url = parseURL(req.url, true);
-      req.params = await formatParams(req);
-
-      resolver.next().value(req, res);
+    const instance = http.createServer((req, res) => {
+      this.receiveRequest(req, res);
     });
 
     defineProperties(this, {
+      router: {
+        value: router,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
       logger: {
         value: logger,
         writable: false,
@@ -55,6 +50,25 @@ class Server {
 
   listen(port) {
     this.instance.listen(port);
+  }
+
+  async receiveRequest(req, res) {
+    const { headers } = req;
+    const methodOverride = headers['X-HTTP-Method-Override'];
+
+    this.logRequest(req, res);
+
+    req.setEncoding('utf8');
+    res.setHeader('Content-Type', 'application/vnd.api+json');
+
+    if (methodOverride) {
+      req.method = methodOverride;
+    }
+
+    req.url = parseURL(req.url, true);
+    req.params = await formatParams(req);
+
+    this.router.resolve(req, res);
   }
 
   logRequest(req, res) {

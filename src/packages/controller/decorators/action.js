@@ -1,5 +1,7 @@
+import { Collection, Model } from '../../database';
+
 import sanitizeParams from '../middleware/sanitize-params';
-import setRecord from '../middleware/set-record';
+import createPageLinks from '../utils/create-page-links';
 
 export default function action(target, key, desc) {
   const { value } = desc;
@@ -8,22 +10,38 @@ export default function action(target, key, desc) {
     get() {
       return () => [
         sanitizeParams,
-        setRecord,
-
         ...this.middleware,
 
         async function (req, res) {
-          let { data, links } = await value.call(this, req, res);
+          const { domain } = this;
+          const { url: { pathname } } = req;
+          let links = { self: domain + pathname };
+          let data = await value.call(this, req, res);
 
-          if (data && typeof data !== 'object') {
-            return data;
-          }
+          if (typeof data === 'object') {
+            const {
+              params,
 
-          if (data) {
-            data = this.serializer.stream({
-              data,
-              links
-            }, req.params.include, req.params.fields);
+              params: {
+                fields,
+                include
+              },
+
+              url: {
+                path
+              }
+            } = req;
+
+            if (data instanceof Collection || data instanceof Model) {
+              if (data instanceof Collection) {
+                links = {
+                  self: domain + path,
+                  ...createPageLinks(domain, pathname, params, data.total)
+                };
+              }
+
+              data = this.serializer.stream({ data, links }, include, fields);
+            }
           }
 
           return data;

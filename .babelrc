@@ -1,11 +1,9 @@
 {
   "plugins": [
     "syntax-flow",
-    "transform-es2015-modules-commonjs",
     "transform-decorators-legacy",
     "transform-flow-strip-types",
     "transform-class-properties",
-    "transform-es2015-classes",
     "transform-es2015-destructuring",
     "transform-es2015-parameters",
     "transform-es2015-spread",

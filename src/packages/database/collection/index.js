@@ -1,54 +1,55 @@
+/* @flow */
+
+import Model from '../model';
+
 import insert from './utils/insert';
 import entries from '../../../utils/entries';
 
 /**
  * @private
  */
-class Collection extends Array<Object> {
+class Collection extends Array<Model> {
+  total: number;
+
   constructor({
     model,
+    total,
     records = [],
     related = {}
   }: {
-    model: any,
+    model: typeof Model,
+    total: ?number,
     records: Array<Object>,
     related: Object
   } = {}) {
     const { length } = records;
-
-    const {
-      tableName,
-      primaryKey
-    }: {
-      tableName: string,
-      primaryKey: string
-    } = model;
+    const { tableName, primaryKey } = model;
+    const pkPattern = new RegExp(`^.+\.${primaryKey}$`);
 
     super(length);
-    insert(this, records);
 
-    return this.map(row => {
+    records = records.map((row): model => {
       entries(related)
-        .forEach(([name, relatedRecords]) => {
+        .forEach(([name, relatedRecords]: [string, Array<{}>]) => {
           const match = relatedRecords
-            .filter(relatedRecord => {
+            .filter((relatedRecord): boolean => {
               const pk: ?string = relatedRecord[`${tableName}.${primaryKey}`];
 
               return pk === row[primaryKey];
             })
             .map(relatedRecord => {
-              return entries(relatedRecord).reduce((rR, [key, value]) => {
-                if (key.indexOf('.') >= 0) {
-                  return {
-                    ...rR,
-                    [key.replace(`${name}.`, '')]: value
-                  };
-                } else {
-                  return rR;
-                }
-              }, {});
+              return entries(relatedRecord)
+                .reduce((rR, [key, value]: [string, Object]) => {
+                  if (key.indexOf('.') >= 0) {
+                    return {
+                      ...rR,
+                      [key.replace(`${name}.`, '')]: value
+                    };
+                  } else {
+                    return rR;
+                  }
+                }, {});
             });
-
 
           if (match.length) {
             row[name] = match;
@@ -57,11 +58,11 @@ class Collection extends Array<Object> {
 
       row = entries(row)
         .reduce((r, [key, value]) => {
-          if (new RegExp(`^.+\.${primaryKey}$`).test(key) && !value) {
+          if (!value && pkPattern.test(key)) {
             return r;
           } else if (key.indexOf('.') >= 0) {
             const [a, b] = key.split('.');
-            let parent = r[a];
+            let parent: ?Object = r[a];
 
             if (!parent) {
               parent = {};
@@ -82,6 +83,16 @@ class Collection extends Array<Object> {
 
       return new model(row);
     });
+
+    if (!total) {
+      total = length;
+    }
+
+    this.total = total;
+
+    insert(this, records);
+
+    return this;
   }
 }
 

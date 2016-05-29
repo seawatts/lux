@@ -8,6 +8,7 @@ import getOffset from './utils/get-offset';
 import formatSelect from './utils/format-select';
 import fetchHasMany from './utils/fetch-has-many';
 
+import K from '../../../utils/k';
 import pick from '../../../utils/pick';
 import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
@@ -145,7 +146,6 @@ class Model {
       await beforeUpdate(this);
       await beforeSave(this);
 
-
       this.updatedAt = new Date();
 
       const query = table()
@@ -241,7 +241,7 @@ class Model {
     }
   }
 
-  static async create(props = {}) {
+  static async create(props = {}): Model {
     const {
       primaryKey,
       table,
@@ -299,7 +299,7 @@ class Model {
     return instance;
   }
 
-  static async count(where = {}) {
+  static async count(where = {}): number {
     const { table, store: { debug } } = this;
     const query = table().count('* AS count').where(where);
 
@@ -317,7 +317,7 @@ class Model {
     return isFinite(count) ? count : 0;
   }
 
-  static async find(pk, options = {}) {
+  static async find(pk, options = {}): Model {
     const { primaryKey, tableName } = this;
 
     return await this.findOne({
@@ -328,7 +328,7 @@ class Model {
     });
   }
 
-  static async findAll(options = {}) {
+  static async findAll(options: {} = {}, count: boolean = false): Collection {
     const {
       table,
       tableName,
@@ -381,6 +381,8 @@ class Model {
         };
       })
       .filter(included => included);
+
+    let total: ?number;
 
     let related = include.filter(({ relationship: { type } }) => {
       return type === 'hasMany';
@@ -439,17 +441,22 @@ class Model {
       });
     }
 
-    records = await records;
+    [records, total] = await Promise.all([
+      records,
+      count ? this.count() : K.call(null)
+    ]);
+
     related = await fetchHasMany(this, related, records);
 
     return new Collection({
       records,
       related,
+      total,
       model: this
     });
   }
 
-  static async findOne(options = {}) {
+  static async findOne(options = {}): Model {
     const [record] = await this.findAll({
       ...options,
       limit: 1

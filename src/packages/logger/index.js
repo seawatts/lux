@@ -18,6 +18,9 @@ const {
   }
 } = process;
 
+/**
+ * @private
+ */
 class Logger {
   enabled;
   appPath;

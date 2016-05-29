@@ -3,6 +3,9 @@ import getDynamicSegments from './utils/get-dynamic-segments';
 
 const { defineProperties } = Object;
 
+/**
+ * @private
+ */
 class Route {
   path;
   action;

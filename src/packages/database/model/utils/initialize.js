@@ -1,5 +1,7 @@
 import { camelize, dasherize, singularize } from 'inflection';
 
+import Collection from '../../collection';
+
 import { line } from '../../../logger';
 import entries from '../../../../utils/entries';
 import underscore from '../../../../utils/underscore';
@@ -149,7 +151,10 @@ function initializeProps(prototype, attributes, relationships) {
             const refs = refsFor(this);
 
             if (isArray(value)) {
-              refs[key] = value.map(record => new model(record));
+              refs[key] = new Collection({
+                model,
+                records: value
+              });
             }
           }
         };
