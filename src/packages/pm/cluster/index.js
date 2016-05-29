@@ -1,13 +1,14 @@
+/* @flow */
 import os from 'os';
 import cluster from 'cluster';
 import Promise from 'bluebird';
 import { EventEmitter } from 'events';
-import { red, green } from 'chalk';
 
 import range from '../../../utils/range';
 
 import bound from '../../../decorators/bound';
 
+import type { Worker } from 'cluster';
 import type Logger from '../../logger';
 
 const { env: { NODE_ENV = 'development' } } = process;
@@ -20,9 +21,9 @@ const { defineProperties } = Object;
 class Cluster extends EventEmitter {
   logger: Logger;
 
-  worker: Object = cluster.worker;
+  worker: Worker = cluster.worker;
 
-  workers: Set<Object> = new Set();
+  workers: Set<Worker> = new Set();
 
   isMaster: boolean = cluster.isMaster;
 
@@ -38,8 +39,6 @@ class Cluster extends EventEmitter {
     setupWorker: () => void
   }) {
     super();
-
-    const { isMaster } = this;
 
     defineProperties(this, {
       logger: {
@@ -64,14 +63,11 @@ class Cluster extends EventEmitter {
       }
     });
 
-    if (isMaster) {
+    if (this.isMaster) {
       setupMaster(this);
-      process.on('update', this.reload);
 
-      this.forkAll().then(workers => {
-        this.emit('ready');
-        workers.forEach(worker => this.workers.add(worker));
-      });
+      process.on('update', this.reload);
+      this.forkAll().then(() => this.emit('ready'));
     } else {
       setupWorker(this.worker);
     }
@@ -79,41 +75,65 @@ class Cluster extends EventEmitter {
     return this;
   }
 
-  fork(): Promise<Object> {
-    return new Promise((resolve, reject) => {
-      const worker = cluster.fork({ NODE_ENV });
+  fork(retry: boolean = true): Promise<Worker> {
+    return new Promise(resolve => {
+      if (this.workers.size < this.maxWorkers) {
+        const worker = cluster.fork({ NODE_ENV });
 
-      const handleError = (code: number) => {
-        console.log(code);
-        reject(new Error(`${code}`));
-      };
+        const timeout = setTimeout(() => {
+          handleError();
 
-      worker.once('error', handleError);
-      worker.once('message', (msg: string) => {
-        if (msg === 'ready') {
-          const { process: { pid } } = worker;
+          worker.removeListener('exit', handleExit);
+          worker.kill();
 
-          this.logger.log(`Added worker process: ${green(`${pid}`)}`);
+          if (retry) {
+            this.fork(false);
+          }
+        }, 30000);
 
+        const cleanup = () => {
           worker.removeListener('error', handleError);
+          worker.removeListener('message', handleMessage);
 
-          resolve(worker);
-        }
-      });
+          clearTimeout(timeout);
+        };
+
+        const handleExit = (code: ?number) => {
+          this.workers.delete(worker);
+          this.fork();
+        };
+
+        const handleError = () => {
+          this.workers.delete(worker);
+          cleanup();
+        };
+
+        const handleMessage = (msg: string) => {
+          if (msg === 'ready') {
+            this.workers.add(worker);
+
+            cleanup();
+            resolve(worker);
+          }
+        };
+
+        worker.on('exit', handleExit);
+        worker.once('error', handleError);
+        worker.once('message', handleMessage);
+      }
     });
   }
 
   shutdown(worker: Object): Promise<Object> {
     return new Promise(resolve => {
+      this.workers.delete(worker);
+
       worker.send('shutdown');
       worker.disconnect();
 
-      const timeout = setTimeout(() => worker.kill(), 2000);
+      const timeout = setTimeout(() => worker.kill(), 5000);
 
       worker.once('exit', () => {
-        const { process: { pid } } = worker;
-
-        this.logger.log(`Removed worker process: ${red(`${pid}`)}`);
         resolve(worker);
         clearTimeout(timeout);
       });
@@ -122,19 +142,18 @@ class Cluster extends EventEmitter {
 
   @bound
   async reload(): Promise<void> {
-    let workers = Array.from(this.workers);
+    const workers: Array<[Worker, Worker]> = Array.from(this.workers)
+      .reduce((arr, item, idx, src) => {
+        return (idx + 1) % 2 ? [...arr, src.slice(idx, idx + 2)] : arr;
+      }, []);
 
-    for (let worker of workers) {
-      await this.shutdown(worker);
-      this.workers.delete(worker);
-
-      worker = await this.fork();
-      this.workers.add(worker);
+    for (const group of workers) {
+      await Promise.all(group.map(worker => this.shutdown(worker)));
     }
   }
 
-  forkAll(): Promise<Array<Object>> {
-    return Promise.all([...range(1, this.maxWorkers)].map(() => {
+  forkAll(): Promise<Worker> {
+    return Promise.race([...range(1, this.maxWorkers)].map(() => {
       return this.fork();
     }));
   }
