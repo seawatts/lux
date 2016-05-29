@@ -12,6 +12,7 @@
 		"Promise": true,
 		"Symbol": true,
 		"WeakMap": true,
+    "Iterable": true,
 		"before": true,
 		"after": true,
 		"describe": true,

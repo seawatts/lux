@@ -1,13 +1,17 @@
+/* @flow */
 import path from 'path';
 import webpack from 'webpack';
 import { green } from 'chalk';
 
-import fs from '../packages/fs';
+import fs from '../fs';
 
-import type { Compiler } from 'webpack';
+import type { Asset, Compiler, Stats } from 'webpack';
 
 const { stdout, stderr } = process;
 
+/**
+ * @private
+ */
 export async function createCompiler(dir: string, env: string): Compiler {
   let plugins = [];
 
@@ -91,26 +95,33 @@ export async function createCompiler(dir: string, env: string): Compiler {
   });
 }
 
-export function displayStats(stats: Object, isRunning): void {
+/**
+ * @private
+ */
+ export function displayStats(stats: Stats, isRunning: boolean = true): void {
   const {
     assets,
     warnings
   }: {
-    assets: Array<{}>,
+    assets: Array<Asset>,
     warnings: Array<string>
   } = stats.toJson();
 
-  const changed = assets.filter(({ emitted }: { emitted: boolean }) => emitted);
+  if (isRunning) {
+    const changed = assets.filter(({
+      emitted
+    }: {
+      emitted: boolean
+    }) => emitted);
 
-  changed.forEach(({ name }: { name: string }) => {
-    stdout.write(`${green('update')} ${name}\n`);
-  });
+    changed.forEach(({ name }: { name: string }) => {
+      stdout.write(`${green('update')} ${name}\n`);
+    });
 
-  stdout.write('\n');
-
-  if (warnings.length) {
-    // warnings.forEach(warning => stderr.write(`${warning}\n`));
+    stdout.write('\n');
   }
 
-  process.emit('update', changed);
+  if (warnings.length) {
+    warnings.forEach(warning => stderr.write(`${warning}\n`));
+  }
 }

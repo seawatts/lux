@@ -208,14 +208,14 @@ class Controller {
     defineProperties(this, {
       model: {
         value: model,
-        writable: true,
+        writable: false,
         enumerable: true,
         configurable: false
       },
 
       serializer: {
         value: serializer,
-        writable: true,
+        writable: false,
         enumerable: true,
         configurable: false
       },
@@ -236,35 +236,35 @@ class Controller {
 
       modelName: {
         value: model ? model.modelName : null,
-        writable: true,
+        writable: false,
         enumerable: false,
         configurable: false
       },
 
       attributes: {
         value: attributes,
-        writable: true,
+        writable: false,
         enumerable: false,
         configurable: false
       },
 
       relationships: {
         value: relationships,
-        writable: true,
+        writable: false,
         enumerable: false,
         configurable: false
       },
 
       serializers: {
         value: serializers,
-        writable: true,
+        writable: false,
         enumerable: false,
         configurable: false
       },
 
       parentController: {
         value: parentController,
-        writable: true,
+        writable: false,
         enumerable: false,
         configurable: false
       }

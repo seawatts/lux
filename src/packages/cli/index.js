@@ -1,4 +1,5 @@
 import cli from 'commander';
+import cluster from 'cluster';
 
 import { VALID_DATABASES } from './constants';
 
@@ -16,9 +17,11 @@ import {
 } from './commands';
 
 import tryCatch from '../../utils/try-catch';
-import { createCompiler, displayStats } from '../../utils/compiler';
+import { createCompiler, displayStats } from '../compiler';
 
 import { version as VERSION } from '../../../package.json';
+
+const { isMaster } = cluster;
 
 export default function CLI() {
   const { argv, exit, env: { PWD } } = process;
@@ -82,13 +85,19 @@ export default function CLI() {
             return rescue(err);
           }
 
+          if (isMaster) {
+            displayStats(stats, isRunning);
+
+            if (isRunning) {
+              process.emit('update');
+            }
+          }
+
           if (!isRunning) {
             process.env.NODE_ENV = environment;
             await serve(port);
             isRunning = true;
           }
-
-          displayStats(stats);
         });
       }, rescue);
     });
