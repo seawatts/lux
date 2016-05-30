@@ -1,5 +1,3 @@
-global.external = require;
-
 import path from 'path';
 import Logger from '../src/packages/logger';
 
@@ -10,6 +8,7 @@ const { assign } = Object;
 
 const {
   env: {
+    PWD,
     TRAVIS = false,
     NODE_ENV = 'development'
   }
@@ -19,7 +18,7 @@ before(done => {
   process.once('ready', done);
 
   tryCatch(async () => {
-    const appPath = path.join(__dirname, 'test-app');
+    const appPath = path.join(PWD, 'test/test-app');
     const options = { cwd: appPath };
 
     if (!TRAVIS) {
@@ -29,15 +28,17 @@ before(done => {
     await exec('lux db:migrate', options);
     await exec('lux db:seed', options);
 
-    const TestApp = require(`${appPath}/bin/app`);
+    const {
+      default: TestApp
+    } = require('./test-app/app/index');
 
     const {
       default: config
-    } = require(`./test-app/config/environments/${NODE_ENV}`);
+    } = require('./test-app/config/environments/test');
 
     assign(config, {
+      appPath,
       port: 4000,
-      path: appPath,
 
       logger: await Logger.create({
         appPath,

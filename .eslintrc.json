@@ -13,6 +13,7 @@
 		"Symbol": true,
 		"WeakMap": true,
     "Iterable": true,
+    "Module": true,
 		"before": true,
 		"after": true,
 		"describe": true,

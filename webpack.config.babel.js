@@ -34,10 +34,18 @@ module.exports = {
   ],
 
   module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: ['eslint'],
+        exclude: /node_modules/
+      },
+    ],
+
     loaders: [
       {
         test: /\.js$/,
-        loader: ['babel', 'eslint'],
+        loader: ['babel'],
         exclude: /node_modules/
       },
 

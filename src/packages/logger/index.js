@@ -1,3 +1,4 @@
+/* @flow */
 import moment from 'moment';
 import { dim, red, yellow } from 'chalk';
 
@@ -12,6 +13,9 @@ import memoize from '../../decorators/memoize';
 const { defineProperties } = Object;
 
 const {
+  stderr,
+  stdout,
+
   env: {
     PWD,
     NODE_ENV = 'development'
@@ -22,10 +26,17 @@ const {
  * @private
  */
 class Logger {
-  enabled;
-  appPath;
+  enabled: boolean;
 
-  constructor({ enabled, appPath = PWD } = {}) {
+  appPath: string;
+
+  constructor({
+    enabled,
+    appPath = PWD
+  }: {
+    enabled: boolean,
+    appPath: string
+  } = {}): Logger {
     defineProperties(this, {
       enabled: {
         value: Boolean(enabled),
@@ -46,18 +57,18 @@ class Logger {
   }
 
   @memoize
-  get file() {
+  get file(): string {
     const { appPath } = this;
 
     return `${appPath}/log/${NODE_ENV}.log`;
   }
 
-  get timestamp() {
+  get timestamp(): string {
     return moment().format('M/D/YY h:m:ss A');
   }
 
   @bound
-  log(message) {
+  log(message: string) {
     const { enabled } = this;
 
     if (enabled) {
@@ -65,13 +76,13 @@ class Logger {
 
       message = `${dim(`[${timestamp}]`)} ${message}\n`;
 
-      process.stdout.write(message);
+      stdout.write(message);
       setImmediate(write, file, message);
     }
   }
 
   @bound
-  error(message) {
+  error(message: string) {
     const { enabled } = this;
 
     if (enabled) {
@@ -79,13 +90,13 @@ class Logger {
 
       message = `${red(`[${timestamp}]`)} ${message}\n`;
 
-      process.stderr.write(message);
+      stderr.write(message);
       setImmediate(write, file, message);
     }
   }
 
   @bound
-  warn(message) {
+  warn(message: string) {
     const { enabled } = this;
 
     if (enabled) {
@@ -93,12 +104,15 @@ class Logger {
 
       message = `${yellow(`\n\n[${timestamp}] Warning:`)} ${message}\n\n`;
 
-      process.stdout.write(message);
+      stdout.write(message);
       setImmediate(write, file, message);
     }
   }
 
-  static async create(props) {
+  static async create(props: {
+    enabled: boolean,
+    appPath: string
+  }): Promise<Logger> {
     const instance = new this(props);
     const { appPath } = instance;
     let logFileExists = false;

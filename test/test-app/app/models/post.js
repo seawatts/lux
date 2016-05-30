@@ -1,4 +1,4 @@
-import { Model } from '/Users/zacharygolba/.nvm/versions/node/v6.2.0/lib/node_modules/lux-framework';
+import { Model } from '../../../../dist';
 
 class Post extends Model {
   static belongsTo = {

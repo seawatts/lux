@@ -5,11 +5,9 @@ import Logger, { sql } from '../../logger';
 const { env: { PWD } } = process;
 
 export default async function dbMigrate() {
-  external(`${PWD}/node_modules/babel-core/register`);
-
   const { connection, schema } = new Database({
     path: PWD,
-    config: external(`${PWD}/config/database`).default,
+    config: external(`${PWD}/dist/config/database`).default,
 
     logger: await Logger.create({
       appPath: PWD,
@@ -24,7 +22,7 @@ export default async function dbMigrate() {
     await Promise.all(
       pending.map(async (migration) => {
         const version = migration.replace(/^(\d{16})-.+$/g, '$1');
-        let { up } = external(`${PWD}/db/migrate/${migration}`);
+        let { up } = external(`${PWD}/dist/db/migrate/${migration}`);
 
         up = up(schema());
 

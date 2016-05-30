@@ -1,4 +1,4 @@
-import { Serializer } from '/Users/zacharygolba/.nvm/versions/node/v6.2.0/lib/node_modules/lux-framework';
+import { Serializer } from '../../../../dist';
 
 class AuthorsSerializer extends Serializer {
   attributes = [

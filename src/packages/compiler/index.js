@@ -22,28 +22,27 @@ export async function createCompiler(dir: string, env: string): Compiler {
         ...hash,
         [pkg]: pkg
       };
-    }, {
-      ['/Users/zacharygolba/.nvm/versions/node/v6.2.0/lib/node_modules/lux-' +
-        'framework']: '/Users/zacharygolba/.nvm/versions/node/v6.2.0/lib/' +
-          'node_modules/lux-framework'
-    });
+    }, {});
 
   const entry = await Promise.all([
     fs.readdirAsync(path.join(dir, 'app/models')),
     fs.readdirAsync(path.join(dir, 'app/controllers')),
-    fs.readdirAsync(path.join(dir, 'app/serializers'))
+    fs.readdirAsync(path.join(dir, 'app/serializers')),
+    fs.readdirAsync(path.join(dir, 'db/migrate')),
   ]).then(([
     models,
     controllers,
-    serializers
+    serializers,
+    migrations
   ]) => {
     const app = path.join('app', 'index.js');
     const routes = path.join('app', 'routes.js');
     const config = path.join('config', 'environments', `${env}.js`);
     const database = path.join('config', 'database.js');
+    const seed = path.join('db', 'seed.js');
 
-    const reducer = (type, files) => files.reduce((hash, file) => {
-      file = path.join('app', type, file);
+    const reducer = (prefix, files) => files.reduce((hash, file) => {
+      file = path.join(prefix, file);
 
       return {
         ...hash,
@@ -56,9 +55,11 @@ export async function createCompiler(dir: string, env: string): Compiler {
       [routes]: path.join(dir, routes),
       [config]: path.join(dir, config),
       [database]: path.join(dir, database),
-      ...reducer('models', models),
-      ...reducer('controllers', controllers),
-      ...reducer('serializers', serializers)
+      [seed]: path.join(dir, seed),
+      ...reducer('app/models', models),
+      ...reducer('app/controllers', controllers),
+      ...reducer('app/serializers', serializers),
+      ...reducer('db/migrate', migrations),
     };
   });
 
@@ -75,10 +76,18 @@ export async function createCompiler(dir: string, env: string): Compiler {
     },
 
     module: {
+      preLoaders: [
+        {
+          test: /\.js$/,
+          loader: ['eslint'],
+          exclude: /node_modules/
+        },
+      ],
+
       loaders: [
         {
           test: /\.js$/,
-          loader: ['babel', 'eslint'],
+          loader: ['babel'],
           exclude: /node_modules/
         },
 

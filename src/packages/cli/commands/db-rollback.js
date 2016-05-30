@@ -5,11 +5,9 @@ import fs from '../../fs';
 const { env: { PWD } } = process;
 
 export default async function dbRollback() {
-  external(`${PWD}/node_modules/babel-core/register`);
-
   const { connection, schema } = new Database({
     path: PWD,
-    config: external(`${PWD}/config/database`).default,
+    config: external(`${PWD}/dist/config/database`).default,
 
     logger: await Logger.create({
       appPath: PWD,
@@ -17,7 +15,7 @@ export default async function dbRollback() {
     })
   });
 
-  const migrations = await fs.readdirAsync(`${PWD}/db/migrate`);
+  const migrations = await fs.readdirAsync(`${PWD}/dist/db/migrate`);
 
   await createMigrations(schema);
 
@@ -35,7 +33,7 @@ export default async function dbRollback() {
     });
 
     if (target) {
-      let { down } = external(`${PWD}/db/migrate/${target}`);
+      let { down } = external(`${PWD}/dist/db/migrate/${target}`);
 
       down = down(schema());
 
