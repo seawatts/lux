@@ -68,38 +68,43 @@ export default function CLI() {
     .option('-e, --environment [env]', '(Default: development)')
     .option('-p, --port [port]', '(Default: 4000)')
     .action(async ({ environment = 'development', port = 4000 } = {}) => {
-      const rescue = (err) => {
-        console.error(err);
-        exit(1);
-      };
+      process.env.NODE_ENV = environment;
 
-      await tryCatch(async () => {
-        const compiler = await createCompiler(PWD, environment);
-        let isRunning = false;
+      if (isMaster) {
+        const rescue = (err) => {
+          console.error(err);
+          exit(1);
+        };
 
-        compiler.watch({
-          poll: false,
-          aggregateTimeout: 300
-        }, async (err, stats) => {
-          if (err) {
-            return rescue(err);
-          }
+        await tryCatch(async () => {
+          const compiler = await createCompiler(PWD, environment);
+          let isRunning = false;
 
-          if (isMaster) {
-            displayStats(stats, isRunning);
-
-            if (isRunning) {
-              process.emit('update');
+          compiler.watch({
+            poll: false,
+            aggregateTimeout: 300
+          }, async (err, stats) => {
+            if (err) {
+              return rescue(err);
             }
-          }
 
-          if (!isRunning) {
-            process.env.NODE_ENV = environment;
-            await serve(port);
-            isRunning = true;
-          }
-        });
-      }, rescue);
+            if (isMaster) {
+              displayStats(stats, isRunning);
+
+              if (isRunning) {
+                process.emit('update');
+              }
+            }
+
+            if (!isRunning) {
+              await serve(port);
+              isRunning = true;
+            }
+          });
+        }, rescue);
+      } else {
+        await serve(port);
+      }
     });
 
   cli
@@ -156,12 +161,14 @@ export default function CLI() {
         const compiler = await createCompiler(PWD, NODE_ENV);
 
         compiler.run(async (err) => {
-          if (err) {
-            rescue(err);
-          } else {
-            await dbCreate();
-            exit(0);
-          }
+          tryCatch(async () => {
+            if (err) {
+              rescue(err);
+            } else {
+              await dbCreate();
+              exit(0);
+            }
+          }, rescue);
         });
       }, rescue);
     });
