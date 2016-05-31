@@ -183,7 +183,7 @@ class Controller {
     serializer: Serializer,
     serializers: Map<string, Serializer>,
     parentController: ?Controller
-  }) {
+  }): Controller {
     let attributes = [];
     let relationships = [];
 

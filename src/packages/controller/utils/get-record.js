@@ -1,5 +1,4 @@
 /* @flow */
-
 import omit from '../../../utils/omit';
 import tryCatch from '../../../utils/try-catch';
 import formatInclude from './format-include';

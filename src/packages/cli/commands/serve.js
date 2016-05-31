@@ -1,25 +1,16 @@
-import path from 'path';
 import { cyan } from 'chalk';
 
 import Logger from '../../logger';
+import loader from '../../loader';
 import { createCluster } from '../../pm';
 
 import type Cluster from '../../pm/cluster';
 
-const {
-  env: {
-    PWD,
-    NODE_ENV = 'development'
-  }
-} = process;
+const { env: { PWD } } = process;
 
 export default async function serve(port = 4000) {
-  const dist = path.join(PWD, 'dist');
-  const Application = external(path.join(dist, 'app', 'index')).default;
-
-  const config = external(
-    path.join(dist, 'config', 'environments', NODE_ENV)
-  ).default;
+  const Application = loader(PWD, 'application');
+  const config = loader(PWD, 'config');
 
   const logger = await Logger.create({
     enabled: config.log,
@@ -46,14 +37,12 @@ export default async function serve(port = 4000) {
     },
 
     async setupWorker(worker: Object) {
-      const app = new Application({
+      await new Application({
         ...config,
         port,
         logger,
         path: PWD
       });
-
-      await app.boot();
     }
   });
 }

@@ -1,11 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
 const { readdirSync } = require('fs');
+const { execSync } = require('child_process');
 
 const externals = {
-  '../../../dist': '../../dist/index',
-  '../../../../dist': '../../dist/index',
-
   ...readdirSync('node_modules')
     .filter(pkg => !/\.bin/g.test(pkg))
     .reduce((hash, pkg) => {

@@ -1,18 +1,19 @@
 import fs from '../../fs';
+import loader from '../../loader';
 import { connect } from '../../database';
 
 const { env: { PWD, NODE_ENV = 'development' } } = process;
 
 export default async function dbCreate() {
   const {
-    default: {
+    database: {
       [NODE_ENV]: {
         driver,
         database,
         ...config
       }
     }
-  } = external(`${PWD}/dist/config/database`);
+  } = loader(PWD, 'config');
 
   if (driver === 'sqlite3') {
     await fs.writeFileAsync(`${PWD}/db/${database}_${NODE_ENV}.sqlite`, '');

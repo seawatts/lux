@@ -1,37 +1,67 @@
-import Promise from 'bluebird';
-import cluster from 'cluster';
-import { join as joinPath } from 'path';
-import { pluralize, singularize } from 'inflection';
-
+/* @flow */
 import Server from '../server';
 import Router from '../router';
 import Database from '../database';
 
-import loader from '../loader';
+import boot from './utils/boot';
 
-import {
-  ControllerMissingError,
-  SerializerMissingError
-} from './errors';
+import type Logger from '../logger';
 
 const { defineProperties } = Object;
 const { env: { PWD, PORT } } = process;
-const { isMaster } = cluster;
 
+/**
+ *
+ */
 class Application {
-  path;
-  port;
-  store;
-  domain;
-  logger;
-  router;
+  /**
+   *
+   */
+  path: string;
+
+  /**
+   *
+   */
+  port: number;
+
+  /**
+   * @private
+   */
+  store: Database;
+
+  /**
+   *
+   */
+  domain: string;
+
+  /**
+   *
+   */
+  logger: Logger;
+
+  /**
+   * @private
+   */
+  router: Router;
+
+  /**
+   * @private
+   */
+  server: Server;
 
   constructor({
-    appPath = PWD,
+    path = PWD || '/',
     port = PORT || 4000,
     domain = 'http://localhost',
-    logger
-  } = {}) {
+    logger,
+    database
+  }: {
+    path: string,
+    port: number,
+    domain: string,
+    logger: Logger,
+    database: Database
+  } = {}): Promise<Application> {
     const router = new Router();
 
     const server = new Server({
@@ -40,14 +70,14 @@ class Application {
     });
 
     const store = new Database({
-      path: appPath,
       logger,
-      config: external(joinPath(appPath, 'dist', 'config', 'database')).default
+      path,
+      config: database
     });
 
     defineProperties(this, {
       path: {
-        value: appPath,
+        value: path,
         writable: false,
         enumerable: true,
         configurable: false
@@ -96,94 +126,7 @@ class Application {
       }
     });
 
-    return this;
-  }
-
-  async boot() {
-    const { router, domain, server, port, path, store } = this;
-
-    let [
-      routes,
-      models,
-      controllers,
-      serializers
-    ] = await Promise.all([
-      loader(path, 'routes'),
-      loader(path, 'models'),
-      loader(path, 'controllers'),
-      loader(path, 'serializers')
-    ]);
-
-    await store.define(models);
-
-    models.forEach((model, name) => {
-      const resource = pluralize(name);
-
-      if (!controllers.get(resource)) {
-        throw new ControllerMissingError(resource);
-      }
-
-      if (!serializers.get(resource)) {
-        throw new SerializerMissingError(resource);
-      }
-    });
-
-    serializers.forEach((serializer, name) => {
-      const model = models.get(singularize(name));
-
-      serializer = new serializer({
-        model,
-        domain,
-        serializers
-      });
-
-      if (model) {
-        model.serializer = serializer;
-      }
-
-      serializers.set(name, serializer);
-    });
-
-    let appController = controllers.get('application');
-    appController = new appController({
-      store,
-      domain,
-      serializers,
-      serializer: serializers.get('application')
-    });
-
-    controllers.set('application', appController);
-
-    controllers.forEach((controller, key) => {
-      if (key !== 'application') {
-        const model = store.modelFor(singularize(key));
-
-        controller = new controller({
-          store,
-          model,
-          domain,
-          serializers,
-          serializer: serializers.get(key),
-          parentController: appController
-        });
-
-        controllers.set(key, controller);
-      }
-    });
-
-    router.controllers = controllers;
-
-    routes.get('routes').call(null, router.route, router.resource);
-
-    server.instance.listen(port).once('listening', () => {
-      if (isMaster) {
-        process.emit('ready');
-      } else {
-        process.send('ready');
-      }
-    });
-
-    return this;
+    return boot(this);
   }
 }
 

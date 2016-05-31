@@ -46,7 +46,7 @@ class Database {
     path: string,
     config: Object,
     logger: Logger,
-  } = {}) {
+  } = {}): Database {
     config = config[environment];
 
     const {
@@ -154,5 +154,6 @@ export { default as createMigrations } from './utils/create-migrations';
 export { default as pendingMigrations } from './utils/pending-migrations';
 
 export { default as Model } from './model';
+export { default as Migration } from './migration';
 export { default as Collection } from './collection';
 export default Database;

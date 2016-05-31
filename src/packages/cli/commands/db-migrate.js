@@ -1,13 +1,17 @@
 import Promise from 'bluebird';
 import Database, { createMigrations, pendingMigrations } from '../../database';
 import Logger, { sql } from '../../logger';
+import loader from '../../loader';
 
-const { env: { PWD } } = process;
+const { stdout, env: { PWD } } = process;
 
 export default async function dbMigrate() {
+  const { database: config } = loader(PWD, 'config');
+  const migrations = loader(PWD, 'migrations');
+
   const { connection, schema } = new Database({
+    config,
     path: PWD,
-    config: external(`${PWD}/dist/config/database`).default,
 
     logger: await Logger.create({
       appPath: PWD,
@@ -16,20 +20,29 @@ export default async function dbMigrate() {
   });
 
   await createMigrations(schema);
+
   const pending = await pendingMigrations(PWD, () => connection('migrations'));
 
   if (pending.length) {
     await Promise.all(
       pending.map(async (migration) => {
         const version = migration.replace(/^(\d{16})-.+$/g, '$1');
-        let { up } = external(`${PWD}/dist/db/migrate/${migration}`);
+        migration = migration.replace(new RegExp(`${version}-(.+)\.js`), '$1');
+        migration = migrations.get(`${migration}-up`);
 
-        up = up(schema());
+        if (migration) {
+          const query = migration.run(schema());
 
-        up.on('query', () => console.log(sql`${up.toString()}`));
-        await up;
+          await query.on('query', () => {
+            stdout.write(sql`${query.toString()}\n`);
+          });
 
-        await connection('migrations').insert({ version });
+          await connection('migrations').insert({
+            version
+          });
+        }
+
+        return migration;
       })
     );
   }

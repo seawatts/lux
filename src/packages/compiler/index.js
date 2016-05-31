@@ -1,9 +1,10 @@
-/* @flow */
 import path from 'path';
 import webpack from 'webpack';
 import { green } from 'chalk';
 
 import fs from '../fs';
+
+import createManifest from './utils/create-manifest';
 
 import type { Asset, Compiler, Stats } from 'webpack';
 
@@ -24,7 +25,7 @@ export async function createCompiler(dir: string, env: string): Compiler {
       };
     }, {});
 
-  const entry = await Promise.all([
+  const assets = await Promise.all([
     fs.readdirAsync(path.join(dir, 'app/models')),
     fs.readdirAsync(path.join(dir, 'app/controllers')),
     fs.readdirAsync(path.join(dir, 'app/serializers')),
@@ -35,43 +36,30 @@ export async function createCompiler(dir: string, env: string): Compiler {
     serializers,
     migrations
   ]) => {
-    const app = path.join('app', 'index.js');
-    const routes = path.join('app', 'routes.js');
-    const config = path.join('config', 'environments', `${env}.js`);
-    const database = path.join('config', 'database.js');
-    const seed = path.join('db', 'seed.js');
-
-    const reducer = (prefix, files) => files.reduce((hash, file) => {
-      file = path.join(prefix, file);
-
-      return {
-        ...hash,
-        [file]: path.join(dir, file)
-      };
-    }, {});
-
-    return {
-      [app]: path.join(dir, app),
-      [routes]: path.join(dir, routes),
-      [config]: path.join(dir, config),
-      [database]: path.join(dir, database),
-      [seed]: path.join(dir, seed),
-      ...reducer('app/models', models),
-      ...reducer('app/controllers', controllers),
-      ...reducer('app/serializers', serializers),
-      ...reducer('db/migrate', migrations),
-    };
+    return new Map([
+      ['Application', path.join('app', 'index.js')],
+      ['config', path.join('config', 'environments', `${env}.js`)],
+      ['controllers', controllers],
+      ['database', path.join('config', 'database.js')],
+      ['migrations', migrations],
+      ['models', models],
+      ['routes', path.join('app', 'routes.js')],
+      ['seed', path.join('db', 'seed.js')],
+      ['serializers', serializers]
+    ]);
   });
 
+  await createManifest(dir, assets);
+
   return webpack({
-    entry,
     plugins,
     externals,
+    entry: path.join(dir, 'dist/index.js'),
     target: 'node',
 
     output: {
       path: path.join(dir, 'dist'),
-      filename: '[name]',
+      filename: 'bundle.js',
       libraryTarget: 'commonjs'
     },
 

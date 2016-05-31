@@ -1,38 +1,85 @@
-/* @flow */
 import path from 'path';
 
-import fs, { isJSFile } from '../fs';
+import { Migration } from '../database';
 
-import type { Model } from '../database';
-import type Controller from '../controller';
-import type Serializer from '../serializer';
+import entries from '../../utils/entries';
+import formatKey from './utils/format-key';
+
+let bundle: Map<string, any>;
 
 /**
  * @private
  */
-export default async function loader(
-  appPath: string,
-  type: string
-): Promise<Map<string, Model|Controller|Serializer|Function>> {
-  if (type === 'routes') {
-    const routes = path.join(appPath, 'dist', 'app', 'routes');
+export default function loader(appPath: string, type: string): ?mixed {
+  if (!bundle) {
+    const pattern = /^.+(Controller|Down|Serializer|Up)/g;
+    const manifest = external(path.join(appPath, 'dist', 'bundle'));
 
-    return new Map([
-      ['routes', external(routes).default]
-    ]);
-  } else {
-    const pathForType = path.join(appPath, 'dist', 'app', type);
-    const dependencies: Array<string> = await fs.readdirAsync(pathForType);
+    if (typeof manifest === 'object') {
+      bundle = new Map(
+        entries(
+          entries(manifest).reduce((hash, [key, value]) => {
+            if (pattern.test(key)) {
+              let [match]: [?string] = key.match(pattern);
 
-    return new Map(
-      dependencies
-        .filter(isJSFile)
-        .map((file): [string, Module] => {
-          return [
-            file.replace('.js', ''),
-            external(path.join(pathForType, file)).default
-          ];
-        })
-    );
+              if (match) {
+                match = match.replace(pattern, '$1');
+
+                switch (match) {
+                  case 'Up':
+                  case 'Down':
+                    value = new Migration(value);
+                    hash.migrations.set(formatKey(key), value);
+                    break;
+
+                  case 'Controller':
+                    key = formatKey(key, k => k.replace(match, ''));
+                    hash.controllers.set(key, value);
+                    break;
+
+                  case 'Serializer':
+                  key = formatKey(key, k => k.replace(match, ''));
+                    hash.serializers.set(key, value);
+                    break;
+                }
+              }
+            } else {
+              switch (key) {
+                case 'Application':
+                case 'routes':
+                case 'seed':
+                  hash[formatKey(key)] = value;
+                  break;
+
+                case 'config':
+                  hash.config = {
+                    ...hash.config,
+                    ...value
+                  };
+                  break;
+
+                case 'database':
+                  hash.config.database = value;
+                  break;
+
+                default:
+                  hash.models.set(formatKey(key), value);
+                  break;
+              }
+            }
+
+            return hash;
+          }, {
+            config: {},
+            controllers: new Map(),
+            migrations: new Map(),
+            models: new Map(),
+            serializers: new Map()
+          })
+        )
+      );
+    }
   }
+
+  return bundle.get(type);
 }

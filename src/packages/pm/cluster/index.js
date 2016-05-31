@@ -37,7 +37,7 @@ class Cluster extends EventEmitter {
     logger: Logger,
     setupMaster: () => void,
     setupWorker: () => void
-  }) {
+  }): Cluster {
     super();
 
     defineProperties(this, {

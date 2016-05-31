@@ -1,5 +1,4 @@
 /* @flow */
-
 import Model from '../model';
 
 import insert from './utils/insert';
@@ -21,7 +20,7 @@ class Collection extends Array<Model> {
     total: ?number,
     records: Array<Object>,
     related: Object
-  } = {}) {
+  } = {}): Collection {
     const { length } = records;
     const { tableName, primaryKey } = model;
     const pkPattern = new RegExp(`^.+\.${primaryKey}$`);

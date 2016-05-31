@@ -1,13 +1,17 @@
 import Database, { createMigrations } from '../../database';
 import Logger, { sql } from '../../logger';
 import fs from '../../fs';
+import loader from '../../loader';
 
-const { env: { PWD } } = process;
+const { stdout, env: { PWD } } = process;
 
 export default async function dbRollback() {
+  const { database: config } = loader(PWD, 'config');
+  const migrations = loader(PWD, 'migrations');
+
   const { connection, schema } = new Database({
+    config,
     path: PWD,
-    config: external(`${PWD}/dist/config/database`).default,
 
     logger: await Logger.create({
       appPath: PWD,
@@ -15,11 +19,12 @@ export default async function dbRollback() {
     })
   });
 
-  const migrations = await fs.readdirAsync(`${PWD}/dist/db/migrate`);
-
   await createMigrations(schema);
 
-  if (migrations.length) {
+  const migrationFiles = await fs.readdirAsync(`${PWD}/db/migrate`);
+
+  if (migrationFiles.length) {
+    let migration;
     let version = await connection('migrations')
       .orderBy('version', 'desc')
       .first();
@@ -28,19 +33,23 @@ export default async function dbRollback() {
       version = version.version;
     }
 
-    const target = migrations.find(migration => {
-      return migration.indexOf(version) === 0;
-    });
+    const target = migrationFiles.find(m => m.indexOf(version) === 0);
 
     if (target) {
-      let { down } = external(`${PWD}/dist/db/migrate/${target}`);
+      migration = target.replace(new RegExp(`${version}-(.+)\.js`), '$1');
+      migration = migrations.get(`${migration}-down`);
 
-      down = down(schema());
+      if (migration) {
+        const query = migration.run(schema());
 
-      down.on('query', () => console.log(sql`${down.toString()}`));
-      await down;
+        await query.on('query', () => {
+          stdout.write(sql`${query.toString()}\n`);
+        });
 
-      await connection('migrations').where({ version }).del();
+        await connection('migrations').where({
+          version
+        }).del();
+      }
     }
   }
 }
