@@ -1,6 +1,11 @@
+/* @flow */
+
+/**
+ * @private
+ */
 export default function* range(
-  start: Number = 1,
-  end: Number = 1
+  start: number = 1,
+  end: number = 1
 ): Iterable<number> {
   while (start <= end) {
     yield start++;

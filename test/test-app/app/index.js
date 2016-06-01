@@ -1,4 +1,4 @@
-import { Application } from '../../../dist';
+import { Application } from 'LUX_LOCAL';
 
 class TestApp extends Application {
 

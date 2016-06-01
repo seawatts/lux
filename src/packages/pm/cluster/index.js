@@ -153,7 +153,7 @@ class Cluster extends EventEmitter {
   }
 
   forkAll(): Promise<Worker> {
-    return Promise.race([...range(1, this.maxWorkers)].map(() => {
+    return Promise.race(Array.from(range(1, this.maxWorkers)).map(() => {
       return this.fork();
     }));
   }

@@ -26,18 +26,18 @@ before(done => {
     const compiler = await createCompiler(appPath, NODE_ENV);
 
     if (!TRAVIS) {
-      // await exec('lux db:reset', options);
+      await exec('lux db:reset', options);
     }
 
-    // await exec('lux db:migrate', options);
-    // await exec('lux db:seed', options);
+    await exec('lux db:migrate', options);
+    await exec('lux db:seed', options);
 
     compiler.run(async (err) => {
       const TestApp = loader(appPath, 'application');
       const config = loader(appPath, 'config');
 
       assign(config, {
-        appPath,
+        path: appPath,
         port: 4000,
 
         logger: await Logger.create({

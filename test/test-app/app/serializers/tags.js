@@ -1,4 +1,4 @@
-import { Serializer } from '../../../../dist';
+import { Serializer } from 'LUX_LOCAL';
 
 class TagsSerializer extends Serializer {
   attributes = [

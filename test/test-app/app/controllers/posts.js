@@ -1,4 +1,4 @@
-import { Controller } from '../../../../dist';
+import { Controller } from 'LUX_LOCAL';
 
 class PostsController extends Controller {
   params = [

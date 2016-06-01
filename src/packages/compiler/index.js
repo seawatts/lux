@@ -1,29 +1,32 @@
+/* @flow */
 import path from 'path';
-import webpack from 'webpack';
-import { green } from 'chalk';
+import json from 'rollup-plugin-json';
+import alias from 'rollup-plugin-alias';
+import babel from 'rollup-plugin-babel';
+import eslint from 'rollup-plugin-eslint';
+import commonjs from 'rollup-plugin-commonjs';
+import nodeResolve from 'rollup-plugin-node-resolve';
+import { rollup } from 'rollup';
 
 import fs from '../fs';
-
 import createManifest from './utils/create-manifest';
 
-import type { Asset, Compiler, Stats } from 'webpack';
-
-const { stdout, stderr } = process;
+import type { Bundle } from 'rollup';
 
 /**
  * @private
  */
-export async function createCompiler(dir: string, env: string): Compiler {
-  let plugins = [];
-
-  const externals = (await fs.readdirAsync(path.join(dir, 'node_modules')))
-    .filter(pkg => !/\.bin/g.test(pkg))
-    .reduce((hash, pkg) => {
-      return {
-        ...hash,
-        [pkg]: pkg
-      };
-    }, {});
+export async function compile(
+  dir: string,
+  env: string,
+  useStrict: boolean = false
+): Promise<void> {
+  const external = await Promise.all([
+    fs.readdirAsync(path.join(dir, 'node_modules')),
+    fs.readdirAsync(path.join(__dirname, '../node_modules')),
+  ]).then(([a, b]: [Array<string>, Array<string>]) => {
+    return a.concat(b);
+  });
 
   const assets = await Promise.all([
     fs.readdirAsync(path.join(dir, 'app/models')),
@@ -51,74 +54,48 @@ export async function createCompiler(dir: string, env: string): Compiler {
 
   await createManifest(dir, assets);
 
-  return webpack({
-    plugins,
-    externals,
+  const bundle: Bundle = await rollup({
+    external,
     entry: path.join(dir, 'dist/index.js'),
-    target: 'node',
 
-    output: {
-      path: path.join(dir, 'dist'),
-      filename: 'bundle.js',
-      libraryTarget: 'commonjs'
-    },
+    plugins: [
+      alias({
+        LUX_LOCAL: path.join(__dirname, 'index')
+      }),
 
-    module: {
-      preLoaders: [
-        {
-          test: /\.js$/,
-          loader: ['eslint'],
-          exclude: /node_modules/
-        },
-      ],
+      json(),
 
-      loaders: [
-        {
-          test: /\.js$/,
-          loader: ['babel'],
-          exclude: /node_modules/
-        },
+      commonjs({
+        ignoreGlobal: true,
 
-        {
-          test: /\.json$/,
-          loader: ['json']
-        }
-      ]
-    },
+        include: [
+          path.join(__dirname, '**'),
+          `${path.join(dir, 'node_modules')}/**`
+        ]
+      }),
 
-    eslint: {
-      failOnError: true
-    }
+      nodeResolve({
+        preferBuiltins: true
+      }),
+
+      eslint({
+        include: [
+          path.join(dir, 'app/**'),
+        ],
+
+        exclude: [
+          path.join(dir, 'node_modules/**'),
+          path.join(dir, 'package.json')
+        ]
+      }),
+
+      babel()
+    ]
   });
-}
 
-/**
- * @private
- */
- export function displayStats(stats: Stats, isRunning: boolean = true): void {
-  const {
-    assets,
-    warnings
-  }: {
-    assets: Array<Asset>,
-    warnings: Array<string>
-  } = stats.toJson();
-
-  if (isRunning) {
-    const changed = assets.filter(({
-      emitted
-    }: {
-      emitted: boolean
-    }) => emitted);
-
-    changed.forEach(({ name }: { name: string }) => {
-      stdout.write(`${green('update')} ${name}\n`);
-    });
-
-    stdout.write('\n');
-  }
-
-  if (warnings.length) {
-    warnings.forEach(warning => stderr.write(`${warning}\n`));
-  }
+  return await bundle.write({
+    dest: path.join(dir, 'dist/bundle.js'),
+    format: 'cjs',
+    useStrict: false
+  });
 }

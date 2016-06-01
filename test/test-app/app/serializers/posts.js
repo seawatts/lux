@@ -1,4 +1,4 @@
-import { Serializer } from '../../../../dist';
+import { Serializer } from 'LUX_LOCAL';
 
 class PostsSerializer extends Serializer {
   attributes = [

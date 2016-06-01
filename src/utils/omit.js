@@ -4,7 +4,7 @@ import entries from './entries';
 /**
  * @private
  */
- export default function omit(source: {}, ...omitted: Array<string>) {
+ export default function omit(source: {}, ...omitted: Array<string>): {} {
   return entries(source)
     .filter(([key, value]: [string, mixed]): boolean => {
       return omitted.indexOf(key) < 0;

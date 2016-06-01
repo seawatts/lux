@@ -1,19 +1,31 @@
+/* @flow */
 import { camelize } from 'inflection';
 
 import entries from './entries';
 
-const { isArray } = Array;
+/**
+ * @private
+ */
+export default function camelizeKeys(
+  obj: {} | Array<mixed>,
+  deep: boolean = false
+): {} | Array<mixed> {
+  if (Array.isArray(obj)) {
+    return obj.slice(0);
+  } else if (obj && typeof obj === 'object') {
+    return entries(obj)
+      .reduce((result, [key, value]) => {
+        if (deep && value && typeof value === 'object'
+            && !Array.isArray(value)) {
+          value = camelizeKeys(value, true);
+        }
 
-export default function camelizeKeys(obj, deep = false) {
-  return isArray(obj) ? obj.slice() : entries(obj)
-    .reduce((result, [key, value]) => {
-      if (deep && value && typeof value === 'object' && !isArray(obj)) {
-        value = camelizeKeys(value, true);
-      }
-
-      return {
-        ...result,
-        [camelize(key.replace(/-/g, '_'), true)]: value
-      };
-    }, {});
+        return {
+          ...result,
+          [camelize(key.replace(/-/g, '_'), true)]: value
+        };
+      }, {});
+  } else {
+    return {};
+  }
 }

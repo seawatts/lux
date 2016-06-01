@@ -4,13 +4,7 @@
 const PWD = process.env.PWD;
 
 try {
-  const Lux = require(`${PWD}/node_modules/lux-framework`);
-
-  if (typeof Lux.CLI === 'function') {
-    Lux.CLI();
-  } else {
-    require(`${PWD}/node_modules/lux-framework/dist/packages/cli`);
-  }
+  require(`${PWD}/node_modules/lux-framework/dist/cli`).call(null);
 } catch (err) {
-  require('../dist').CLI();
+  require('../dist/cli').call(null);
 }

@@ -7,18 +7,31 @@ import { line } from '../logger';
 
 import formatParams from './utils/format-params';
 
+import type { IncomingMessage, ServerResponse } from 'http';
+import type Logger from '../logger';
+import type Router from '../router';
+
 const { defineProperties } = Object;
 
 /**
  * @private
  */
 class Server {
-  router;
-  logger;
+  router: Router;
+  logger: Logger;
   instance;
 
-  constructor({ logger, router } = {}) {
-    const instance = http.createServer((req, res) => {
+  constructor({
+    logger,
+    router
+  }: {
+    logger: Logger,
+    router: Router
+  } = {}): Server {
+    const instance = http.createServer((
+      req: IncomingMessage,
+      res: ServerResponse
+    ) => {
       this.receiveRequest(req, res);
     });
 
@@ -48,11 +61,14 @@ class Server {
     return this;
   }
 
-  listen(port) {
+  listen(port: number): void {
     this.instance.listen(port);
   }
 
-  async receiveRequest(req, res) {
+  async receiveRequest(
+    req: IncomingMessage,
+    res: ServerResponse
+  ): Promise<void> {
     const { headers } = req;
     const methodOverride = headers['X-HTTP-Method-Override'];
 
@@ -71,7 +87,7 @@ class Server {
     this.router.resolve(req, res);
   }
 
-  logRequest(req, res) {
+  logRequest(req: IncomingMessage, res: ServerResponse): void {
     const startTime = new Date();
 
     res.once('finish', () => {
