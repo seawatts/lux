@@ -20,12 +20,11 @@
     "build": "npm run clean && npm run type-check && npm run build-cli && npm run build-lux",
     "build-cli": "rollup -c rollup.config.js --format=cjs --output=dist/cli.js -- src/packages/cli/index.js",
     "build-lux": "rollup -c rollup.config.js --format=cjs --output=dist/index.js -- src/index.js",
-    "build-test": "npm run build && webpack --config test/webpack.config.babel.js",
     "clean": "rm -rf dist test/dist test/test-app/dist",
     "docs": "rm -rf docs && documentation build src -o docs -f html",
     "lint": "eslint src/**/*.js",
     "start": "lux serve",
-    "test": "USE_GLOBAL_LUX=true npm run build && mocha --timeout 60000 test/dist/helper.js test/dist/unit/**/*.js test/dist/integration/**/*.js",
+    "test": "npm run build && mocha --timeout 60000 test/dist/helper.js test/dist/unit/**/*.js test/dist/integration/**/*.js",
     "type-check": "flow check"
   },
   "author": "Zachary Golba",
