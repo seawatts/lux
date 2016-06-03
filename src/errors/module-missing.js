@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import { red, green } from 'chalk';
 
 import { line } from '../packages/logger';

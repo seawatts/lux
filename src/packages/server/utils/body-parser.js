@@ -1,7 +1,4 @@
-import Promise from 'bluebird';
-import querystring from 'querystring';
-
-const { parse: parseQueryString } = querystring;
+import { parse as parseQueryString } from 'querystring';
 
 export default function bodyParser(req) {
   return new Promise((resolve, reject) => {

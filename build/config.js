@@ -4,18 +4,20 @@ import eslint from 'rollup-plugin-eslint';
 import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import { readdirSync } from 'fs';
+import { join as joinPath } from 'path';
 
 export default {
-  external: readdirSync('node_modules'),
+  external: readdirSync(joinPath(__dirname, '../node_modules')),
 
-  banner: 'const external = require;\n' +
-    'require(\'source-map-support\').install();\n',
+  banner:
+    'require(\'source-map-support\').install();\n' +
+    'const external = require;\n',
 
   plugins: [
     json(),
 
     commonjs({
-      include: 'node_modules/**',
+      include: joinPath(__dirname, '../node_modules/**'),
       ignoreGlobal: true
     }),
 
@@ -27,11 +29,11 @@ export default {
       throwError: true,
 
       exclude: [
-        'node_modules/**',
-        'package.json'
+        joinPath(__dirname, '../node_modules/**'),
+        joinPath(__dirname, '../package.json')
       ]
     }),
 
-    babel(),
+    babel()
   ],
 };

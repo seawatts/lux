@@ -1,50 +1,26 @@
+// @flow
 import { stat, readdir } from 'fs';
 
-export default function exists(path, dir) {
+/**
+ * @private
+ */
+export default function exists(
+  path: string | RegExp,
+  dir: string
+): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    const pathArgError = new TypeError(
-      'First argument must be a string or RegExp.'
-    );
+    if (typeof path === 'string') {
+      stat(path, err => resolve(Boolean(!err)));
+    } else if (path instanceof RegExp) {
+      const pattern = path;
 
-    const dirArgError = new TypeError(
-      'Second argument must be a string.'
-    );
-
-    switch (typeof path) {
-      case 'string':
-        stat(path, err => {
-          if (err) {
-            if (err.code === 'ENOENT') {
-              resolve(false);
-            } else {
-              reject(err);
-            }
-          } else {
-            resolve(true);
-          }
-        });
-        break;
-
-      case 'object':
-        if (path instanceof RegExp) {
-          if (typeof dir === 'string') {
-            readdir(dir, (err, files) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve(files.some(file => path.test(file)));
-              }
-            });
-          } else {
-            reject(dirArgError);
-          }
+      readdir(dir, (err, files) => {
+        if (err) {
+          reject(err);
         } else {
-          reject(pathArgError);
+          resolve(files.some(file => pattern.test(file)));
         }
-        break;
-
-      default:
-        reject(pathArgError);
+      });
     }
   });
 }

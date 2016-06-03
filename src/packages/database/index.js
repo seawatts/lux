@@ -1,6 +1,5 @@
-/* @flow */
-import Promise from 'bluebird';
-import cluster from 'cluster';
+// @flow
+import { worker, isMaster } from 'cluster';
 
 import {
   ModelMissingError,
@@ -19,9 +18,7 @@ import readonly from '../../decorators/readonly';
 import nonenumerable from '../../decorators/nonenumerable';
 import nonconfigurable from '../../decorators/nonconfigurable';
 
-const { defineProperties } = Object;
-const { worker, isMaster } = cluster;
-const { env: { PWD, NODE_ENV: environment = 'development' } } = process;
+const { env: { NODE_ENV = 'development' } } = process;
 
 /**
  * @private
@@ -39,7 +36,7 @@ class Database {
   models: Map<string, typeof Model> = new Map();
 
   constructor({
-    path = PWD,
+    path,
     config,
     logger,
   } : {
@@ -47,15 +44,15 @@ class Database {
     config: Object,
     logger: Logger,
   } = {}): Database {
-    config = config[environment];
+    config = config[NODE_ENV];
 
     const {
-      debug = (environment === 'development')
+      debug = (NODE_ENV === 'development')
     }: {
       debug: boolean
     } = config;
 
-    defineProperties(this, {
+    Object.defineProperties(this, {
       path: {
         value: path,
         writable: false,

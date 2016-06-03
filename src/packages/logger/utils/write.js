@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import ansiRegex from 'ansi-regex';
 
 import fs from '../../fs';

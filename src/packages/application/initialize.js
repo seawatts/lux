@@ -1,36 +1,108 @@
-/* @flow */
-import Promise from 'bluebird';
-import cluster from 'cluster';
+// @flow
 import { pluralize, singularize } from 'inflection';
 
-import loader from '../../loader';
+import Database from '../database';
+import Logger from '../logger';
+import Router from '../router';
+import Server from '../server';
+import loader from '../loader';
 
 import {
   ControllerMissingError,
   SerializerMissingError
-} from '../errors';
+} from './errors';
 
-import type Application from '../index';
-
-const { isMaster } = cluster;
+import type Application from './index';
 
 /**
  * @private
  */
-export default async function boot(app: Application): Promise<Application> {
-  const {
-    router,
-    domain,
-    server,
-    port,
-    path,
-    store
-  } = app;
-
+export default async function initialize(app: Application, {
+  log,
+  path,
+  port,
+  domain,
+  database
+}: {
+  log: boolean,
+  path: string,
+  port: number,
+  domain: string,
+  database: {}
+} = {}): Promise<Application> {
   const routes = loader(path, 'routes');
   const models = loader(path, 'models');
   const controllers = loader(path, 'controllers');
   const serializers = loader(path, 'serializers');
+
+  const logger = await new Logger({
+    path,
+    enabled: log
+  });
+
+  const router = new Router();
+
+  const server = new Server({
+    router,
+    logger
+  });
+
+  const store = new Database({
+    logger,
+    path,
+    config: database
+  });
+
+  Object.defineProperties(app, {
+    path: {
+      value: path,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    port: {
+      value: port,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    store: {
+      value: store,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    domain: {
+      value: domain,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    logger: {
+      value: logger,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    router: {
+      value: router,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    server: {
+      value: server,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    }
+  });
 
   await store.define(models);
 
@@ -93,10 +165,12 @@ export default async function boot(app: Application): Promise<Application> {
   routes.call(null, router.route, router.resource);
 
   server.instance.listen(port).once('listening', () => {
-    if (isMaster) {
+    if (typeof process.send === 'function') {
+      process.send({
+        message: 'ready'
+      });
+    } else {
       process.emit('ready');
-    } else if (typeof process.send === 'function') {
-      process.send('ready');
     }
   });
 

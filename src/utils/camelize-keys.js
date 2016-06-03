@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import { camelize } from 'inflection';
 
 import entries from './entries';

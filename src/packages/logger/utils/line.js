@@ -1,7 +1,14 @@
-import template from './template';
+// @flow
+import { insertValues } from '../../template';
 
-export default function line(strings, ...values) {
-  return template(strings, ...values)
+/**
+ * @private
+ */
+export default function line(
+  strings: Array<string>,
+  ...values: Array<mixed>
+): string {
+  return insertValues(strings, ...values)
     .replace(/(\r\n|\n|\r|)/gm, '')
     .replace(/\s+/g, ' ')
     .trim();

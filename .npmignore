@@ -1,23 +1,12 @@
-# source
-/src
-
 # dependencies
 /node_modules
 
 # misc
 .git
-.babelrc
-.eslintrc
-.editorconfig
-.travis.yml
 *.DS_Store
-webpack.config.babel.js
 /examples
-yuidoc.json
 
 # docs
-CHANGELOG.md
-ROADMAP.md
 /docs
 
 # logs

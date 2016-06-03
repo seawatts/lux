@@ -1,8 +1,9 @@
-/* @flow */
+// @flow
 import os from 'os';
 import cluster from 'cluster';
-import Promise from 'bluebird';
 import { EventEmitter } from 'events';
+import { join as joinPath } from 'path';
+import { red, green } from 'chalk';
 
 import range from '../../../utils/range';
 
@@ -13,64 +14,60 @@ import type Logger from '../../logger';
 
 const { env: { NODE_ENV = 'development' } } = process;
 
-const { defineProperties } = Object;
-
 /**
  * @private
  */
 class Cluster extends EventEmitter {
+  path: string;
+
+  port: number;
+
   logger: Logger;
 
-  worker: Worker = cluster.worker;
-
   workers: Set<Worker> = new Set();
-
-  isMaster: boolean = cluster.isMaster;
 
   maxWorkers: number = os.cpus().length;
 
   constructor({
-    logger,
-    setupMaster,
-    setupWorker
+    path,
+    port,
+    logger
   }: {
-    logger: Logger,
-    setupMaster: () => void,
-    setupWorker: () => void
+    path: string,
+    port: number,
+    logger: Logger
   }): Cluster {
     super();
 
-    defineProperties(this, {
+    Object.defineProperties(this, {
+      path: {
+        value: path,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
+      port: {
+        value: port,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
       logger: {
         value: logger,
         writable: false,
-        enumerable: false,
-        configurable: false
-      },
-
-      setupMaster: {
-        value: setupMaster,
-        writable: false,
-        enumerable: false,
-        configurable: false
-      },
-
-      setupWorker: {
-        value: setupMaster,
-        writable: false,
-        enumerable: false,
+        enumerable: true,
         configurable: false
       }
     });
 
-    if (this.isMaster) {
-      setupMaster(this);
+    cluster.setupMaster({
+      exec: joinPath(path, 'dist/boot.js')
+    });
 
-      process.on('update', this.reload);
-      this.forkAll().then(() => this.emit('ready'));
-    } else {
-      setupWorker(this.worker);
-    }
+    process.on('update', this.reload);
+    this.forkAll().then(() => this.emit('ready'));
 
     return this;
   }
@@ -78,7 +75,11 @@ class Cluster extends EventEmitter {
   fork(retry: boolean = true): Promise<Worker> {
     return new Promise(resolve => {
       if (this.workers.size < this.maxWorkers) {
-        const worker = cluster.fork({ NODE_ENV });
+        const worker = cluster.fork({
+          NODE_ENV,
+          PWD: this.path,
+          PORT: this.port
+        });
 
         const timeout = setTimeout(() => {
           handleError();
@@ -91,40 +92,60 @@ class Cluster extends EventEmitter {
           }
         }, 30000);
 
-        const cleanup = () => {
-          worker.removeListener('error', handleError);
+        const handleExit = (code: ?number) => {
           worker.removeListener('message', handleMessage);
 
-          clearTimeout(timeout);
-        };
+          this.logger.log(
+            `Removing worker process: ${red(`${worker.process.pid}`)}`
+          );
 
-        const handleExit = (code: ?number) => {
           this.workers.delete(worker);
           this.fork();
         };
 
         const handleError = () => {
+          this.logger.log(
+            `Removing worker process: ${red(`${worker.process.pid}`)}`
+          );
+
           this.workers.delete(worker);
-          cleanup();
+          clearTimeout(timeout);
         };
 
-        const handleMessage = (msg: string) => {
-          if (msg === 'ready') {
-            this.workers.add(worker);
+        const handleMessage = ({
+          message,
+          ...options
+        }: {
+          type: string,
+          data: string,
+          message: string,
+        }) => {
+          switch (message) {
+            case 'log':
+              this.logger.logFromMessage(options);
+              break;
 
-            cleanup();
-            resolve(worker);
+            case 'ready':
+              this.logger.log(
+                `Adding worker process: ${green(`${worker.process.pid}`)}`
+              );
+
+              this.workers.add(worker);
+
+              clearTimeout(timeout);
+              resolve(worker);
+              break;
           }
         };
 
         worker.on('exit', handleExit);
+        worker.on('message', handleMessage);
         worker.once('error', handleError);
-        worker.once('message', handleMessage);
       }
     });
   }
 
-  shutdown(worker: Object): Promise<Object> {
+  shutdown(worker: Worker): Promise<Object> {
     return new Promise(resolve => {
       this.workers.delete(worker);
 

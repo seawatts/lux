@@ -1,19 +1,20 @@
-/* @flow */
-import Server from '../server';
-import Router from '../router';
-import Database from '../database';
+// @flow
+import initialize from './initialize';
 
-import boot from './utils/boot';
-
+import type Database from '../database';
 import type Logger from '../logger';
-
-const { defineProperties } = Object;
-const { env: { PWD, PORT } } = process;
+import type Router from '../router';
+import type Server from '../server';
 
 /**
  *
  */
 class Application {
+  /**
+   *
+   */
+  log: boolean;
+
   /**
    *
    */
@@ -50,83 +51,25 @@ class Application {
   server: Server;
 
   constructor({
-    path = PWD || '/',
-    port = PORT || 4000,
+    log = true,
+    path,
+    port,
     domain = 'http://localhost',
-    logger,
     database
   }: {
+    log: boolean,
     path: string,
     port: number,
     domain: string,
-    logger: Logger,
-    database: Database
+    database: {}
   } = {}): Promise<Application> {
-    const router = new Router();
-
-    const server = new Server({
-      router,
-      logger
-    });
-
-    const store = new Database({
-      logger,
+    return initialize(this, {
+      log,
       path,
-      config: database
+      port,
+      domain,
+      database
     });
-
-    defineProperties(this, {
-      path: {
-        value: path,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      port: {
-        value: port,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      store: {
-        value: store,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      domain: {
-        value: domain,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      router: {
-        value: router,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      logger: {
-        value: logger,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      server: {
-        value: server,
-        writable: false,
-        enumerable: false,
-        configurable: false
-      }
-    });
-
-    return boot(this);
   }
 }
 

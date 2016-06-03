@@ -1,66 +1,66 @@
-/* @flow */
+// @flow
 import moment from 'moment';
 import { dim, red, yellow } from 'chalk';
-
-import fs from '../fs';
+import { isMaster, isWorker } from 'cluster';
 
 import write from './utils/write';
-import tryCatch from '../../utils/try-catch';
+import initialize from './initialize';
 
 import bound from '../../decorators/bound';
 import memoize from '../../decorators/memoize';
-
-const { defineProperties } = Object;
 
 const {
   stderr,
   stdout,
 
   env: {
-    PWD,
     NODE_ENV = 'development'
   }
 } = process;
 
 /**
- * @private
+ *
  */
 class Logger {
+  /**
+   * @private
+   */
+  path: string;
+
+  /**
+   *
+   */
   enabled: boolean;
 
-  appPath: string;
-
   constructor({
-    enabled,
-    appPath = PWD
+    path,
+    enabled
   }: {
+    path: string,
     enabled: boolean,
-    appPath: string
-  } = {}): Logger {
-    defineProperties(this, {
+  } = {}): Promise<Logger> {
+    Object.defineProperties(this, {
+      path: {
+        value: path,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
       enabled: {
         value: Boolean(enabled),
         writable: false,
         enumerable: true,
         configurable: false
-      },
-
-      appPath: {
-        value: appPath,
-        writable: false,
-        enumerable: false,
-        configurable: false
       }
     });
 
-    return this;
+    return initialize(this, isMaster);
   }
 
   @memoize
   get file(): string {
-    const { appPath } = this;
-
-    return `${appPath}/log/${NODE_ENV}.log`;
+    return `${this.path}/log/${NODE_ENV}.log`;
   }
 
   get timestamp(): string {
@@ -68,73 +68,78 @@ class Logger {
   }
 
   @bound
-  log(message: string) {
-    const { enabled } = this;
+  log(msg: string): void {
+    if (this.enabled) {
+      if (isWorker && typeof process.send === 'function') {
+        process.send({
+          data: msg,
+          type: 'info',
+          message: 'log'
+        });
+      } else if (isMaster) {
+        msg = `${dim(`[${this.timestamp}]`)} ${msg}\n\n`;
 
-    if (enabled) {
-      const { file, timestamp } = this;
-
-      message = `${dim(`[${timestamp}]`)} ${message}\n`;
-
-      stdout.write(message);
-      setImmediate(write, file, message);
+        stdout.write(msg);
+        setImmediate(write, this.file, msg);
+      }
     }
   }
 
   @bound
-  error(message: string) {
-    const { enabled } = this;
+  error(msg: string): void {
+    if (this.enabled) {
+      if (isWorker && typeof process.send === 'function') {
+        process.send({
+          data: msg,
+          type: 'error',
+          message: 'log'
+        });
+      } else if (isMaster) {
+        msg = `${red(`[${this.timestamp}]`)} ${msg}\n\n`;
 
-    if (enabled) {
-      const { file, timestamp } = this;
-
-      message = `${red(`[${timestamp}]`)} ${message}\n`;
-
-      stderr.write(message);
-      setImmediate(write, file, message);
+        stderr.write(msg);
+        setImmediate(write, this.file, msg);
+      }
     }
   }
 
   @bound
-  warn(message: string) {
-    const { enabled } = this;
+  warn(msg: string): void {
+    if (this.enabled) {
+      if (isWorker && typeof process.send === 'function') {
+        process.send({
+          data: msg,
+          type: 'warn',
+          message: 'log'
+        });
+      } else if (isMaster) {
+        msg = `${yellow(`\n\n[${this.timestamp}] Warning:`)} ${msg}\n\n`;
 
-    if (enabled) {
-      const { file, timestamp } = this;
-
-      message = `${yellow(`\n\n[${timestamp}] Warning:`)} ${message}\n\n`;
-
-      stdout.write(message);
-      setImmediate(write, file, message);
+        stderr.write(msg);
+        setImmediate(write, this.file, msg);
+      }
     }
   }
 
-  static async create(props: {
-    enabled: boolean,
-    appPath: string
-  }): Promise<Logger> {
-    const instance = new this(props);
-    const { appPath } = instance;
-    let logFileExists = false;
+  logFromMessage({
+    data,
+    type,
+  }: {
+    data: string,
+    type: string
+  }): void {
+    if (isMaster) {
+      switch (type) {
+        case 'error':
+          return this.error(data);
 
-    await tryCatch(() => fs.mkdirAsync(`${appPath}/log`));
+        case 'info':
+          return this.log(data);
 
-    await tryCatch(async () => {
-      await fs.accessAsync(`${appPath}/log/${NODE_ENV}.log`);
-      logFileExists = true;
-    });
-
-    if (!logFileExists) {
-      await tryCatch(() => {
-        return fs.writeFileAsync(
-          `${appPath}/log/${NODE_ENV}.log`,
-          '',
-          'utf8'
-        );
-      });
+        case 'warn':
+          return this.warn(data);
+      }
     }
-
-    return instance;
   }
 }
 

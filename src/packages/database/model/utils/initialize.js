@@ -6,9 +6,6 @@ import { line } from '../../../logger';
 import entries from '../../../../utils/entries';
 import underscore from '../../../../utils/underscore';
 
-const { isArray } = Array;
-const { create, defineProperties, keys } = Object;
-
 const REFS = new WeakMap();
 
 const VALID_HOOKS = [
@@ -70,7 +67,7 @@ function refsFor(instance) {
   let table = REFS.get(instance);
 
   if (!table) {
-    table = create(null);
+    table = Object.create(null);
     REFS.set(instance, table);
   }
 
@@ -78,7 +75,7 @@ function refsFor(instance) {
 }
 
 function initializeProps(prototype, attributes, relationships) {
-  const props = create(null);
+  const props = Object.create(null);
 
   entries(attributes)
     .reduce((hash, [key, { type, nullable, defaultValue }]) => {
@@ -150,7 +147,7 @@ function initializeProps(prototype, attributes, relationships) {
           set(value) {
             const refs = refsFor(this);
 
-            if (isArray(value)) {
+            if (Array.isArray(value)) {
               refs[key] = new Collection({
                 model,
                 records: value
@@ -173,7 +170,7 @@ function initializeProps(prototype, attributes, relationships) {
       return hash;
     }, props);
 
-  defineProperties(prototype, props);
+  Object.defineProperties(prototype, props);
 }
 
 function initializeHooks(model, hooks) {
@@ -195,11 +192,11 @@ function initializeHooks(model, hooks) {
         ...hash,
         [key]: async (...args) => await hook.apply(model, args)
       };
-    }, create(null));
+    }, Object.create(null));
 }
 
 function initializeValidations(model, attributes, validations) {
-  const attributeNames = keys(attributes);
+  const attributeNames = Object.keys(attributes);
 
   return entries(validations)
     .filter(([key, value]) => {
@@ -228,7 +225,7 @@ function initializeValidations(model, attributes, validations) {
         ...hash,
         [key]: value
       };
-    }, create(null));
+    }, Object.create(null));
 }
 
 export default async function initialize(store, model, table) {
@@ -298,7 +295,7 @@ export default async function initialize(store, model, table) {
       };
     }, {});
 
-  defineProperties(model, {
+  Object.defineProperties(model, {
     store: {
       value: store,
       writable: false,

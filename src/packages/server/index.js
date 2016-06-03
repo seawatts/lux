@@ -1,3 +1,4 @@
+// @flow
 import http from 'http';
 import { parse as parseURL } from 'url';
 
@@ -7,11 +8,14 @@ import { line } from '../logger';
 
 import formatParams from './utils/format-params';
 
-import type { IncomingMessage, ServerResponse } from 'http';
+import type {
+  Server as HTTPServer,
+  IncomingMessage,
+  ServerResponse
+} from 'http';
+
 import type Logger from '../logger';
 import type Router from '../router';
-
-const { defineProperties } = Object;
 
 /**
  * @private
@@ -19,7 +23,7 @@ const { defineProperties } = Object;
 class Server {
   router: Router;
   logger: Logger;
-  instance;
+  instance: HTTPServer;
 
   constructor({
     logger,
@@ -28,14 +32,11 @@ class Server {
     logger: Logger,
     router: Router
   } = {}): Server {
-    const instance = http.createServer((
-      req: IncomingMessage,
-      res: ServerResponse
-    ) => {
+    const instance = http.createServer((req, res) => {
       this.receiveRequest(req, res);
     });
 
-    defineProperties(this, {
+    Object.defineProperties(this, {
       router: {
         value: router,
         writable: false,

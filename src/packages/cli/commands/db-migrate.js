@@ -1,9 +1,8 @@
-import Promise from 'bluebird';
 import Database, { createMigrations, pendingMigrations } from '../../database';
 import Logger, { sql } from '../../logger';
 import loader from '../../loader';
 
-const { stdout, env: { PWD } } = process;
+const { env: { PWD } } = process;
 
 export default async function dbMigrate() {
   const { database: config } = loader(PWD, 'config');
@@ -13,8 +12,8 @@ export default async function dbMigrate() {
     config,
     path: PWD,
 
-    logger: await Logger.create({
-      appPath: PWD,
+    logger: await new Logger({
+      path: PWD,
       enabled: false
     })
   });
@@ -34,7 +33,7 @@ export default async function dbMigrate() {
           const query = migration.run(schema());
 
           await query.on('query', () => {
-            stdout.write(sql`${query.toString()}\n`);
+            process.stdout.write(sql`${query.toString()}\n`);
           });
 
           await connection('migrations').insert({

@@ -5,7 +5,6 @@ import tryCatch from '../../utils/try-catch';
 
 import bound from '../../decorators/bound';
 
-const { defineProperties } = Object;
 const idPattern = /(?![\=])(\d+)/g;
 
 /**
@@ -17,7 +16,7 @@ class Router {
   controllers;
 
   constructor() {
-    defineProperties(this, {
+    Object.defineProperties(this, {
       routes: {
         value: new Map(),
         writable: false,
@@ -108,7 +107,7 @@ class Router {
 
   resolve(req, res) {
     const { routes } = this;
-    const { pathname } = req.url;
+    const { url: { pathname } } = req;
     const staticPath = pathname.replace(idPattern, ':dynamic');
 
     const route = routes.get(`${req.method}:${staticPath}`);

@@ -1,7 +1,12 @@
 import cli from 'commander';
-import cluster from 'cluster';
 
 import { VALID_DATABASES } from './constants';
+import { version as VERSION } from '../../../package.json';
+
+import Watcher from '../watcher';
+import { compile } from '../compiler';
+
+import tryCatch from '../../utils/try-catch';
 
 import {
   test,
@@ -16,14 +21,7 @@ import {
   dbRollback
 } from './commands/index';
 
-import tryCatch from '../../utils/try-catch';
-import { compile } from '../compiler';
-
-import { version as VERSION } from '../../../package.json';
-
 export default function CLI() {
-  const { isMaster } = cluster;
-
   const {
     argv,
     exit,
@@ -76,12 +74,25 @@ export default function CLI() {
     .description('Serve your application')
     .option('-e, --environment [env]', '(Default: development)')
     .option('-p, --port [port]', '(Default: 4000)')
-    .action(({ environment = 'development', port = 4000 } = {}) => {
+    .option('-h, --hot', 'Reload when a file change is detected')
+    .action(({
+      environment = NODE_ENV,
+      port = 4000,
+      hot = (environment === 'development')
+    } = {}) => {
       return tryCatch(async () => {
         process.env.NODE_ENV = environment;
-        if (isMaster) {
-          await compile(PWD, environment);
+
+        if (hot) {
+          const watcher = new Watcher(PWD);
+
+          watcher.on('change', async (type, file) => {
+            await compile(PWD, environment);
+            process.emit('update');
+          });
         }
+
+        await compile(PWD, environment);
         await serve(port);
       }, rescue);
     });

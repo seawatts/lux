@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import { underscore as _ } from 'inflection';
 
 /**

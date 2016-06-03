@@ -1,13 +1,10 @@
 import { dasherize, underscore } from 'inflection';
 
-const { ceil } = Math;
-const { keys } = Object;
-
 export default function createPageLinks(domain, path, params, total) {
   let i, key, str, val, first, last, prev, next, filterKeys, fieldKeys;
   let { page, limit, sort, filter, include, fields } = params;
   let base = domain + path;
-  let lastPageNum = total === 0 ? 1 : ceil(total / limit);
+  let lastPageNum = total === 0 ? 1 : Math.ceil(total / limit);
 
   first = `${base}?page=1`;
   last = `${base}?page=${lastPageNum}`;
@@ -52,7 +49,7 @@ export default function createPageLinks(domain, path, params, total) {
     }
   }
 
-  filterKeys = keys(filter);
+  filterKeys = Object.keys(filter);
 
   for (i = 0; i < filterKeys.length; i++) {
     key = filterKeys[i];
@@ -86,7 +83,7 @@ export default function createPageLinks(domain, path, params, total) {
     }
   }
 
-  fieldKeys = keys(fields);
+  fieldKeys = Object.keys(fields);
 
   for (i = 0; i < fieldKeys.length; i++) {
     key = fieldKeys[i];

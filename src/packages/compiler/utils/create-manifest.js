@@ -1,5 +1,4 @@
-/* @flow */
-import Promise from 'bluebird';
+// @flow
 import { join as joinPath } from 'path';
 import { camelize, classify, pluralize } from 'inflection';
 

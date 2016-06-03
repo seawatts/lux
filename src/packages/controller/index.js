@@ -1,5 +1,3 @@
-import Promise from 'bluebird';
-
 import Model from '../database/model';
 
 import omit from '../../utils/omit';
@@ -12,8 +10,6 @@ import type { IncomingMessage, ServerResponse } from 'http';
 
 import type Database, { Collection } from '../database';
 import type Serializer from '../serializer';
-
-const { defineProperties } = Object;
 
 /**
  * The `Controller` class is responsible for taking in requests from the outside
@@ -205,7 +201,7 @@ class Controller {
       });
     }
 
-    defineProperties(this, {
+    Object.defineProperties(this, {
       model: {
         value: model,
         writable: false,

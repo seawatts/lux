@@ -1,12 +1,10 @@
-/* @flow */
-
-const { keys } = Object;
+// @flow
 
 /**
  * @private
  */
 export default function entries(source: Object = {} ): Array<[string, any]> {
-  return keys(source).reduce((result: Array<[string, mixed]>, key: string) => {
+  return Object.keys(source).reduce((result, key) => {
     result[result.length] = [key, source[key]];
     return result;
   }, []);

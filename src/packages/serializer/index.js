@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import { Readable } from 'stream';
 import { dasherize, pluralize, camelize } from 'inflection';
 
@@ -8,10 +8,6 @@ import tryCatch from '../../utils/try-catch';
 import underscore from '../../utils/underscore';
 
 import bound from '../../decorators/bound';
-
-const { max } = Math;
-const { isArray } = Array;
-const { keys, defineProperties } = Object;
 
 /**
  * The `Serializer` class is where you declare the specific attributes and
@@ -240,7 +236,7 @@ class Serializer {
      domain: string,
      serializers: Map<string, Serializer>
    } = {}) {
-     defineProperties(this, {
+     Object.defineProperties(this, {
        model: {
          value: model,
          writable: false,
@@ -409,8 +405,8 @@ class Serializer {
       let included: Array<Object> = [];
       let lastItemIndex: number;
 
-      if (isArray(data)) {
-        lastItemIndex = max(data.length - 1, 0);
+      if (Array.isArray(data)) {
+        lastItemIndex = Math.max(data.length - 1, 0);
 
         stream.push('[');
 
@@ -466,7 +462,7 @@ class Serializer {
       }
 
       if (included.length) {
-        lastItemIndex = max(included.length - 1, 0);
+        lastItemIndex = Math.max(included.length - 1, 0);
 
         stream.push(',"included":[');
 
@@ -497,7 +493,7 @@ class Serializer {
     fields: Object
   ): Promise<Readable> {
     tryCatch(() => {
-      const payloadKeys: Array<string> = keys(payload);
+      const payloadKeys: Array<string> = Object.keys(payload);
       let i: number;
 
       stream.push('{');
@@ -566,7 +562,7 @@ class Serializer {
 
     const relationships = this.relationshipsFor(item, include, fields);
 
-    if (keys(relationships.data).length) {
+    if (Object.keys(relationships.data).length) {
       data.relationships = relationships.data;
     } else {
       delete data.relationships;

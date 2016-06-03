@@ -13,8 +13,8 @@ export default async function dbSeed() {
     config,
     path: PWD,
 
-    logger: await Logger.create({
-      appPath: PWD,
+    logger: await new Logger({
+      path: PWD,
       enabled: false
     })
   }).define(models);

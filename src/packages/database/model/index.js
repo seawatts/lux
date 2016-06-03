@@ -18,10 +18,6 @@ import readonly from '../../../decorators/readonly';
 import nonenumerable from '../../../decorators/nonenumerable';
 import nonconfigurable from '../../../decorators/nonconfigurable';
 
-const { isArray } = Array;
-const { isFinite } = Number;
-const { assign, keys } = Object;
-
 class Model {
   static table;
   static store;
@@ -61,7 +57,7 @@ class Model {
       }
     } = this;
 
-    assign(
+    Object.assign(
       this,
       pick(props, ...attributeNames, ...relationshipNames)
     );
@@ -107,11 +103,11 @@ class Model {
   }
 
   static get attributeNames() {
-    return keys(this.attributes);
+    return Object.keys(this.attributes);
   }
 
   static get relationshipNames() {
-    return keys(this.relationships);
+    return Object.keys(this.relationships);
   }
 
   async update(props = {}) {
@@ -135,7 +131,7 @@ class Model {
       }
     } = this;
 
-    assign(this, props);
+    Object.assign(this, props);
 
     if (this.isDirty) {
       await beforeValidation(this);
@@ -287,7 +283,7 @@ class Model {
       });
     }
 
-    assign(instance, {
+    Object.assign(instance, {
       [primaryKey]: (await query)[0]
     });
 
@@ -314,7 +310,7 @@ class Model {
     let [{ count }] = await query;
     count = parseInt(count, 10);
 
-    return isFinite(count) ? count : 0;
+    return Number.isFinite(count) ? count : 0;
   }
 
   static async find(pk, options = {}): Model {
@@ -404,7 +400,7 @@ class Model {
           ) || 'created_at',
           direction
         );
-      } else if (isArray(order)) {
+      } else if (Array.isArray(order)) {
         records = records.orderBy(order[0], order[1]);
       }
     }

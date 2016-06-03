@@ -6,7 +6,7 @@ import { InvalidDriverError } from '../errors';
 
 const { env: { NODE_ENV = 'development' } } = process;
 
-export default function connect(appPath, config = {}) {
+export default function connect(path, config = {}) {
   let knex;
   let { pool } = config;
 
@@ -31,7 +31,7 @@ export default function connect(appPath, config = {}) {
   }
 
   tryCatchSync(() => {
-    knex = external(`${appPath}/node_modules/knex`);
+    knex = external(`${path}/node_modules/knex`);
   }, () => {
     throw new ModuleMissingError('knex');
   });
@@ -52,7 +52,7 @@ export default function connect(appPath, config = {}) {
       socketPath: socket,
 
       filename: usingSQLite ?
-        `${appPath}/db/${database}_${NODE_ENV}.sqlite` : undefined
+        `${path}/db/${database}_${NODE_ENV}.sqlite` : undefined
     }
   });
 }

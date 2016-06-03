@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import { dasherize } from 'inflection';
 
 import underscore from '../../../utils/underscore';

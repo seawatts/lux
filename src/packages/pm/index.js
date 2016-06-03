@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import Cluster from './cluster';
 
 import type Logger from '../logger';
@@ -7,17 +7,17 @@ import type Logger from '../logger';
  * @private
  */
 export function createCluster({
-  logger,
-  setupMaster,
-  setupWorker
+  path,
+  port,
+  logger
 }: {
-  logger: Logger,
-  setupMaster: () => void,
-  setupWorker: () => void,
+  path: string,
+  port: number,
+  logger: Logger
 }): Cluster {
   return new Cluster({
-    logger,
-    setupMaster,
-    setupWorker
+    path,
+    port,
+    logger
   });
 }

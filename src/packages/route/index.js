@@ -1,8 +1,6 @@
 import getStaticPath from './utils/get-static-path';
 import getDynamicSegments from './utils/get-dynamic-segments';
 
-const { defineProperties } = Object;
-
 /**
  * @private
  */
@@ -26,7 +24,7 @@ class Route {
       handlers = controller[action]();
     }
 
-    defineProperties(this, {
+    Object.defineProperties(this, {
       path: {
         value: path,
         writable: false,

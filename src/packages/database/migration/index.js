@@ -1,5 +1,4 @@
-/* @flow */
-const { defineProperties } = Object;
+// @flow
 
 /**
  * @private
@@ -8,7 +7,7 @@ class Migration {
   fn: () => Promise<void>;
 
   constructor(fn: () => Promise<void>): Migration {
-    defineProperties(this, {
+    Object.defineProperties(this, {
       fn: {
         value: fn,
         writeable: false,

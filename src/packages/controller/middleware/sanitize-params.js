@@ -3,9 +3,6 @@ import { camelize } from 'inflection';
 import pick from '../../../utils/pick';
 import entries from '../../../utils/entries';
 
-const { isArray } = Array;
-const { assign } = Object;
-
 export default function sanitizeParams(req, res) {
   const { modelName, model: { relationshipNames } } = this;
   const params = { ...req.params };
@@ -45,7 +42,7 @@ export default function sanitizeParams(req, res) {
   }
 
   if (!include || typeof include !== 'string') {
-    if (!isArray(include)) {
+    if (!Array.isArray(include)) {
       include = [];
     }
   } else {
@@ -97,7 +94,7 @@ export default function sanitizeParams(req, res) {
   if (/^(POST|PATCH)$/g.test(req.method)) {
     let { type, attributes } = params.data;
 
-    assign(req.params, {
+    Object.assign(req.params, {
       data: {
         id: params.data.id,
 

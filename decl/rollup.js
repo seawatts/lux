@@ -1,5 +1,6 @@
 type rollupOptions = {
   entry: string;
+  onwarn?: Function;
   plugins?: Array<{}>;
   external?: Array<string>;
 };

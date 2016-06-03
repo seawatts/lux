@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import path from 'path';
 import json from 'rollup-plugin-json';
 import alias from 'rollup-plugin-alias';
@@ -8,8 +8,10 @@ import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import { rollup } from 'rollup';
 
-import fs from '../fs';
+import fs, { rmrf } from '../fs';
 import createManifest from './utils/create-manifest';
+import createBootScript from './utils/create-boot-script';
+import { default as onwarn } from './utils/handle-warning';
 
 import type { Bundle } from 'rollup';
 
@@ -21,6 +23,9 @@ export async function compile(
   env: string,
   useStrict: boolean = false
 ): Promise<void> {
+  const local = path.join(__dirname, 'index');
+  const entry = path.join(dir, 'dist/index.js');
+
   const external = await Promise.all([
     fs.readdirAsync(path.join(dir, 'node_modules')),
     fs.readdirAsync(path.join(__dirname, '../node_modules')),
@@ -52,15 +57,19 @@ export async function compile(
     ]);
   });
 
-  await createManifest(dir, assets);
+  await Promise.all([
+    createManifest(dir, assets),
+    createBootScript(dir)
+  ]);
 
   const bundle: Bundle = await rollup({
+    entry,
+    onwarn,
     external,
-    entry: path.join(dir, 'dist/index.js'),
 
     plugins: [
       alias({
-        LUX_LOCAL: path.join(__dirname, 'index')
+        LUX_LOCAL: local
       }),
 
       json(),
@@ -70,7 +79,7 @@ export async function compile(
 
         include: [
           path.join(__dirname, '**'),
-          `${path.join(dir, 'node_modules')}/**`
+          path.join(dir, 'node_modules/**')
         ]
       }),
 
@@ -89,9 +98,16 @@ export async function compile(
         ]
       }),
 
-      babel()
+      babel({
+        exclude: [
+          path.join(__dirname, '**'),
+          path.join(dir, 'node_modules/**')
+        ]
+      })
     ]
   });
+
+  await rmrf(entry);
 
   return await bundle.write({
     dest: path.join(dir, 'dist/bundle.js'),

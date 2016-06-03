@@ -1,16 +1,14 @@
-import Promise from 'bluebird';
 import Ora from 'ora';
 import { green } from 'chalk';
 
 import fs from '../../fs';
 
-import exec from '../utils/exec';
+import exec from '../../../utils/exec';
 import driverFor from '../utils/driver-for';
 
 import generate from './generate';
 
 import appTemplate from '../templates/application';
-import appBinaryTemplate from '../templates/app-binary';
 import configTemplate from '../templates/config';
 import routesTemplate from '../templates/routes';
 import dbTemplate from '../templates/database';
@@ -29,7 +27,6 @@ export default async function create(name, database) {
 
   await Promise.all([
     fs.mkdirAsync(`${project}/app`),
-    fs.mkdirAsync(`${project}/bin`),
     fs.mkdirAsync(`${project}/config`),
     fs.mkdirAsync(`${project}/db`)
   ]);
@@ -52,12 +49,6 @@ export default async function create(name, database) {
     fs.writeFileAsync(
       `${project}/app/routes.js`,
       routesTemplate(),
-      'utf8'
-    ),
-
-    fs.writeFileAsync(
-      `${project}/bin/app.js`,
-      appBinaryTemplate(),
       'utf8'
     ),
 

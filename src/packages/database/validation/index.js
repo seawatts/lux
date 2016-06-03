@@ -1,5 +1,3 @@
-const { assign } = Object;
-
 class Validation {
   key;
   value;
@@ -7,7 +5,7 @@ class Validation {
   validator;
 
   constructor({ key, value, model, validator = () => true } = {}) {
-    return assign(this, {
+    return Object.assign(this, {
       key,
       value,
       model,

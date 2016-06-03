@@ -1,5 +1,11 @@
-const { max } = Math;
+// @flow
 
-export default function getOffset(page = 1, limit = 25) {
-  return max(parseInt(page, 10) - 1 , 0) * limit;
+/**
+ * @private
+ */
+export default function getOffset(
+  page: number = 1,
+  limit: number = 25
+): number {
+  return Math.max(parseInt(page, 10) - 1 , 0) * limit;
 }

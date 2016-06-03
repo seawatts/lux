@@ -6,9 +6,6 @@ import bodyParser from './body-parser';
 import entries from '../../../utils/entries';
 import camelizeKeys from '../../../utils/camelize-keys';
 
-const { assign } = Object;
-const { isArray } = Array;
-
 const int = /^\d+$/g;
 const bool = /^(true|false)$/i;
 const isoDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|\+\d{4})$/ig;
@@ -20,7 +17,7 @@ function format(params, method = 'GET') {
     if (value) {
       switch (typeof value) {
         case 'object':
-          if (isArray(value)) {
+          if (Array.isArray(value)) {
             value = value.map(v => int.test(v) ? parseInt(v, 10) : v);
           } else {
             value = format(value, method);
@@ -57,7 +54,7 @@ function format(params, method = 'GET') {
 export default async function formatParams(req) {
   const { method, url: { query } } = req;
   const pattern = /^(.+)\[(.+)\]$/g;
-  let params = assign({ data: { attributes: {} } }, query);
+  let params = Object.assign({ data: { attributes: {} } }, query);
 
   params = entries(params).reduce((result, [key, value]) => {
     if (pattern.test(key)) {
@@ -88,7 +85,7 @@ export default async function formatParams(req) {
   }, {});
 
   if (/(PATCH|POST)/g.test(method)) {
-    assign(params, await bodyParser(req));
+    Object.assign(params, await bodyParser(req));
   }
 
   return format(params, method);

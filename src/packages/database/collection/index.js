@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 import Model from '../model';
 
 import insert from './utils/insert';

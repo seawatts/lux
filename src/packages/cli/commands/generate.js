@@ -1,4 +1,3 @@
-import Promise from 'bluebird';
 import moment from 'moment';
 import { red, green, yellow } from 'chalk';
 import { pluralize } from 'inflection';
@@ -14,12 +13,12 @@ import modelMigrationTemplate from '../templates/model-migration';
 
 import indent from '../utils/indent';
 
-const { stdin, stdout, env: { PWD } } = process;
+const { env: { PWD } } = process;
 
 export async function generateType(type, name, pwd, attrs = []) {
   const rl = createInterface({
-    input: stdin,
-    output: stdout
+    input: process.stdin,
+    output: process.stdout
   });
 
   rl.setPrompt('');

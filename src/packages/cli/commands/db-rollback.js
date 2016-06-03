@@ -3,7 +3,7 @@ import Logger, { sql } from '../../logger';
 import fs from '../../fs';
 import loader from '../../loader';
 
-const { stdout, env: { PWD } } = process;
+const { env: { PWD } } = process;
 
 export default async function dbRollback() {
   const { database: config } = loader(PWD, 'config');
@@ -13,8 +13,8 @@ export default async function dbRollback() {
     config,
     path: PWD,
 
-    logger: await Logger.create({
-      appPath: PWD,
+    logger: await new Logger({
+      path: PWD,
       enabled: false
     })
   });
@@ -43,7 +43,7 @@ export default async function dbRollback() {
         const query = migration.run(schema());
 
         await query.on('query', () => {
-          stdout.write(sql`${query.toString()}\n`);
+          process.stdout.write(sql`${query.toString()}\n`);
         });
 
         await connection('migrations').where({
