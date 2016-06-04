@@ -71,7 +71,7 @@ export default async function initialize(app: Application, {
     store: {
       value: store,
       writable: false,
-      enumerable: true,
+      enumerable: false,
       configurable: false
     },
 
@@ -92,7 +92,7 @@ export default async function initialize(app: Application, {
     router: {
       value: router,
       writable: false,
-      enumerable: true,
+      enumerable: false,
       configurable: false
     },
 

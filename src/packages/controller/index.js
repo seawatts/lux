@@ -328,7 +328,11 @@ class Controller {
   }
 
   /**
+   * Returns a list of `Model` instances that the Controller instance
+   * represents.
    *
+   * This method supports filtering, sorting, pagination, including
+   * relationships, and sparse fieldsets via query parameters.
    */
   async index(req: IncomingMessage, res: ServerResponse): Promise<Collection> {
     const { model, modelName, relationships } = this;
@@ -369,14 +373,18 @@ class Controller {
   }
 
   /**
+   * Returns a single `Model` instance that the Controller instance represents.
    *
+   * This method supports including relationships, and sparse fieldsets via
+   * query parameters.
    */
   show(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
     return getRecord(this, req, res);
   }
 
   /**
-   *
+   * Create and return a single `Model` instance that the Controller instance
+   * represents.
    */
   async create(req: IncomingMessage, res: ServerResponse): Promise<Model> {
     const {
@@ -391,7 +399,8 @@ class Controller {
   }
 
   /**
-   *
+   * Update and return a single `Model` instance that the Controller instance
+   * represents.
    */
   async update(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
     const record = await getRecord(this, req, res);
@@ -412,7 +421,7 @@ class Controller {
   }
 
   /**
-   *
+   * Destroy a single `Model` instance that the Controller instance represents.
    */
   async destroy(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
     const record = await getRecord(this, req, res);
@@ -425,7 +434,9 @@ class Controller {
   }
 
   /**
+   * An action handler used for responding to HEAD or OPTIONS requests.
    *
+   * @private
    */
   preflight(req: IncomingMessage, res: ServerResponse): boolean {
     return true;
