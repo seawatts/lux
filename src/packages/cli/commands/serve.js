@@ -35,9 +35,9 @@ export default async function serve(
 
   const { maxWorkers: count } = cluster;
 
-  logger.log(`Starting Lux Server with ${cyan(`${count}`)} worker processes`);
+  logger.info(`Starting Lux Server with ${cyan(`${count}`)} worker processes`);
 
   cluster.once('ready', () => {
-    logger.log(`Lux Server listening on port: ${cyan(`${port}`)}`);
+    logger.info(`Lux Server listening on port: ${cyan(`${port}`)}`);
   });
 }

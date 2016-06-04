@@ -152,7 +152,7 @@ class Model {
         const { constructor: { logger } } = this;
 
         query.on('query', () => {
-          setImmediate(() => logger.log(sql`${query.toString()}`));
+          setImmediate(() => logger.info(sql`${query.toString()}`));
         });
       }
 
@@ -198,7 +198,7 @@ class Model {
       } = this;
 
       query.on('query', () => {
-        setImmediate(() => logger.log(sql`${query.toString()}`));
+        setImmediate(() => logger.info(sql`${query.toString()}`));
       });
     }
 
@@ -279,7 +279,7 @@ class Model {
       const { logger } = this;
 
       query.on('query', () => {
-        setImmediate(() => logger.log(sql`${query.toString()}`));
+        setImmediate(() => logger.info(sql`${query.toString()}`));
       });
     }
 
@@ -303,7 +303,7 @@ class Model {
       const { logger } = this;
 
       query.on('query', () => {
-        setImmediate(() => logger.log(sql`${query.toString()}`));
+        setImmediate(() => logger.info(sql`${query.toString()}`));
       });
     }
 
@@ -433,7 +433,7 @@ class Model {
       const { logger } = this;
 
       records.on('query', () => {
-        setImmediate(() => logger.log(sql`${records.toString()}`));
+        setImmediate(() => logger.info(sql`${records.toString()}`));
       });
     }
 

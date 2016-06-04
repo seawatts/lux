@@ -95,7 +95,7 @@ class Cluster extends EventEmitter {
         const handleExit = (code: ?number) => {
           worker.removeListener('message', handleMessage);
 
-          this.logger.log(
+          this.logger.info(
             `Removing worker process: ${red(`${worker.process.pid}`)}`
           );
 
@@ -104,7 +104,7 @@ class Cluster extends EventEmitter {
         };
 
         const handleError = () => {
-          this.logger.log(
+          this.logger.info(
             `Removing worker process: ${red(`${worker.process.pid}`)}`
           );
 
@@ -126,7 +126,7 @@ class Cluster extends EventEmitter {
               break;
 
             case 'ready':
-              this.logger.log(
+              this.logger.info(
                 `Adding worker process: ${green(`${worker.process.pid}`)}`
               );
 

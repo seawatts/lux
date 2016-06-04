@@ -41,7 +41,7 @@ export default async function fetchHasMany(model, related, records) {
       const { logger } = model;
 
       query.on('query', () => {
-        setImmediate(() => logger.log(sql`${query.toString()}`));
+        setImmediate(() => logger.info(sql`${query.toString()}`));
       });
     }
 

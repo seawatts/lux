@@ -102,7 +102,7 @@ class Server {
         statusColor = 'red';
       }
 
-      this.logger.log(line`
+      this.logger.info(line`
         ${cyan(`${method}`)} ${url.pathname} -> Finished after
         ${new Date().getTime() - startTime.getTime()} ms with
         ${chalk[statusColor].call(null, `${statusCode}`)}

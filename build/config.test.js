@@ -6,6 +6,9 @@ import { readdirSync } from 'fs';
 import { join as joinPath } from 'path';
 
 export default {
+  banner: 'require(\'source-map-support\').install();\n',
+  sourceMap: true,
+
   entry: [
     joinPath(__dirname, '../test/index.js'),
     joinPath(__dirname, '../test/unit/**/*.js'),

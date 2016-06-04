@@ -8,6 +8,7 @@ import { join as joinPath } from 'path';
 
 export default {
   external: readdirSync(joinPath(__dirname, '../node_modules')),
+  sourceMap: true,
 
   banner:
     'require(\'source-map-support\').install();\n' +

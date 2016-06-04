@@ -112,6 +112,11 @@ export async function compile(
   return await bundle.write({
     dest: path.join(dir, 'dist/bundle.js'),
     format: 'cjs',
-    useStrict: false
+    sourceMap: true,
+    useStrict: false,
+
+    banner:
+      `require('${path.join(__dirname, '../node_modules/source-map-support')}` +
+      `').install();\n`
   });
 }
