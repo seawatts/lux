@@ -1,10 +1,18 @@
+// @flow
 import indent from '../utils/indent';
 
-export default (name, driver = 'sqlite3') => {
+/**
+ * @private
+ */
+export default (name: string, driver: string): string => {
   let username;
   let template = 'export default {\n';
 
   name = name.replace('-', '_');
+
+  if (!driver) {
+    driver = 'sqlite3';
+  }
 
   if (driver === 'pg') {
     username = 'postgres';
@@ -46,7 +54,7 @@ export default (name, driver = 'sqlite3') => {
     }
   });
 
-  template += '\n};';
+  template += '\n};\n';
 
   return template;
 };

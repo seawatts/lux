@@ -4,6 +4,9 @@ import loader from '../../loader';
 
 const { env: { PWD, NODE_ENV = 'development' } } = process;
 
+/**
+ * @private
+ */
 export default async function dbDrop() {
   const {
     database: {

@@ -1,15 +1,19 @@
-export default () => {
-  return `
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+// @flow
+import template from '../../template';
 
-# dependencies
-/node_modules
+/**
+ * @private
+ */
+export default (): string => template`
+  # See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# logs
-/log
-npm-debug.log
+  # dependencies
+  /node_modules
 
-# misc
-*.DS_Store
-  `.substr(1).trim();
-};
+  # logs
+  /log
+  npm-debug.log
+
+  # misc
+  *.DS_Store
+`;

@@ -1,12 +1,15 @@
-export default () => {
-  return `
-export function up(schema) {
+// @flow
+import template from '../../template';
 
-}
+/**
+ * @private
+ */
+export default (): string => template`
+  export function up(schema) {
 
-export function down(schema) {
+  }
 
-}
+  export function down(schema) {
 
-  `.substr(1).trim();
-};
+  }
+`;

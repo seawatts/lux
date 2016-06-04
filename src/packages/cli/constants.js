@@ -1,3 +1,6 @@
+/**
+ * @private
+ */
 export const VALID_DATABASES = [
   'postgres',
   'sqlite',

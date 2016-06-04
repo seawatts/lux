@@ -1,10 +1,20 @@
+// @flow
 import { classify, camelize, pluralize } from 'inflection';
+
+import template from '../../template';
 
 import indent from '../utils/indent';
 import underscore from '../../../utils/underscore';
 
-export default (name, attrs = []) => {
+/**
+ * @private
+ */
+export default (name: string, attrs: Array<string>): string => {
   name = classify(underscore(name));
+
+  if (!attrs) {
+    attrs = [];
+  }
 
   if (name !== 'Application') {
     name = pluralize(name);
@@ -19,10 +29,10 @@ export default (name, attrs = []) => {
         str += (indent(2) + `params = [\n`);
       }
 
-      str += (indent(4) + `'${camelize(underscore(attr), true)}'`);
+      str += (indent(8) + `'${camelize(underscore(attr), true)}'`);
 
       if (index === array.length - 1) {
-        str += `\n${indent(2)}];`;
+        str += `\n${indent(6)}];`;
       } else {
         str += ',\n';
       }
@@ -30,13 +40,13 @@ export default (name, attrs = []) => {
       return str;
     }, '');
 
-  return `
-import { Controller } from 'lux-framework';
+  return template`
+    import { Controller } from 'lux-framework';
 
-class ${name}Controller extends Controller {
-${body}
-}
+    class ${name}Controller extends Controller {
+    ${body}
+    }
 
-export default ${name}Controller;
-  `.substr(1).trim();
+    export default ${name}Controller;
+  `;
 };

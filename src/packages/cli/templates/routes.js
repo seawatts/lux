@@ -1,7 +1,11 @@
-export default () => {
-  return `
-export default (route, resource) => {
+// @flow
+import template from '../../template';
 
-};
-  `.substr(1).trim();
-};
+/**
+ * @private
+ */
+export default (): string => template`
+  export default function routes(route, resource) {
+
+  }
+`;

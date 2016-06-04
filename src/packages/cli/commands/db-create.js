@@ -4,6 +4,9 @@ import { connect } from '../../database';
 
 const { env: { PWD, NODE_ENV = 'development' } } = process;
 
+/**
+ * @private
+ */
 export default async function dbCreate() {
   const {
     database: {

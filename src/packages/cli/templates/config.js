@@ -1,4 +1,10 @@
-export default (name, env) => {
+// @flow
+import template from '../../template';
+
+/**
+ * @private
+ */
+export default (name: string, env: string): string => {
   const isProdENV = env === 'production';
   let keyPrefix = `${name}`;
 
@@ -6,10 +12,10 @@ export default (name, env) => {
     keyPrefix += `::${env}`;
   }
 
-  return `
-export default {
-  log: ${!isProdENV},
-  domain: 'http://localhost:4000'
-};
-  `.substr(1).trim();
+  return template`
+    export default {
+      log: ${!isProdENV},
+      domain: 'http://localhost:4000'
+    };
+  `;
 };

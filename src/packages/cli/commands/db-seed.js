@@ -4,6 +4,9 @@ import loader from '../../loader';
 
 const { env: { PWD } } = process;
 
+/**
+ * @private
+ */
 export default async function dbSeed() {
   const { database: config } = loader(PWD, 'config');
   const seed = loader(PWD, 'seed');

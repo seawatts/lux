@@ -1,23 +1,27 @@
-export default (name) => {
-  return `
-# ${name}
+// @flow
+import template from '../../template';
 
-## Installation
+/**
+ * @private
+ */
+export default (name: string): string => template`
+  # ${name}
 
-* \`git clone https://github.com/<this-repository>\`
-* \`cd ${name}\`
-* \`npm install\`
+  ## Installation
 
-## Running / Development
+  * \`git clone https://github.com/<this-repository>\`
+  * \`cd ${name}\`
+  * \`npm install\`
 
-* \`lux serve\`
+  ## Running / Development
 
-## Testing
+  * \`lux serve\`
 
-* \`lux test\`
+  ## Testing
 
-## Further Reading / Useful Links
-* [Lux](https://github.com/postlight/lux/)
-* [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)
-  `.substr(1).trim();
-};
+  * \`lux test\`
+
+  ## Further Reading / Useful Links
+  * [Lux](https://github.com/postlight/lux/)
+  * [Chai](http://chaijs.com/) / [Mocha](http://mochajs.org/)
+`;

@@ -1,11 +1,21 @@
+// @flow
 import { classify, camelize, pluralize } from 'inflection';
+
+import template from '../../template';
 
 import indent from '../utils/indent';
 import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
-export default (name, attrs = []) => {
+/**
+ * @private
+ */
+export default (name: string, attrs: Array<string>): string => {
   name = classify(underscore(name));
+
+  if (!attrs) {
+    attrs = [];
+  }
 
   if (name !== 'Application') {
     name = pluralize(name);
@@ -13,10 +23,10 @@ export default (name, attrs = []) => {
 
   const body = entries(
     attrs
-      .filter(attr => /^(\w|-)+:(\w|-)+$/g.test(attr))
+      .filter(attr => /^(\w|-)+:(\w|-)+$/g)
       .map(attr => attr.split(':'))
       .reduce(({ attributes, hasOne, hasMany }, [attr, type]) => {
-        attr = `${indent(4)}'${camelize(underscore(attr), true)}'`;
+        attr = `${indent(8)}'${camelize(underscore(attr), true)}'`;
 
         switch (type) {
           case 'belongs-to':
@@ -37,7 +47,12 @@ export default (name, attrs = []) => {
           hasOne,
           hasMany
         };
-      }, { attributes: [], belongsTo: [], hasOne: [], hasMany: [] })
+      }, {
+        attributes: [],
+        belongsTo: [],
+        hasOne: [],
+        hasMany: []
+      })
   ).reduce((str, [key, value], index) => {
     if (value.length) {
       value = value.join(',\n');
@@ -46,19 +61,20 @@ export default (name, attrs = []) => {
         str += '\n\n';
       }
 
-      str += `${indent(2)}${key} = [\n${value}\n${indent(2)}];`;
+      str += `${indent(index === 0 ? 2 : 6)}${key} = ` +
+        `[\n${value}\n${indent(6)}];`;
     }
 
     return str;
   }, '');
 
-  return `
-import { Serializer } from 'lux-framework';
+  return template`
+    import { Serializer } from 'lux-framework';
 
-class ${name}Serializer extends Serializer {
-${body}
-}
+    class ${name}Serializer extends Serializer {
+    ${body}
+    }
 
-export default ${name}Serializer;
-  `.substr(1).trim();
+    export default ${name}Serializer;
+  `;
 };

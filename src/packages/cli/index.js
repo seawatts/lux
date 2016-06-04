@@ -21,6 +21,9 @@ import {
   dbRollback
 } from './commands/index';
 
+/**
+ * @private
+ */
 export default function CLI() {
   const {
     argv,

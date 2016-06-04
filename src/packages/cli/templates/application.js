@@ -1,15 +1,21 @@
+// @flow
 import { classify } from 'inflection';
 
-export default (name) => {
+import template from '../../template';
+
+/**
+ * @private
+ */
+export default (name: string): string => {
   name = classify(name.replace('-', '_'));
 
-  return `
-import Lux from 'lux-framework';
+  return template`
+    import { Application } from 'lux-framework';
 
-class ${name} extends Lux {
+    class ${name} extends Application {
 
-}
+    }
 
-export default ${name};
-  `.substr(1).trim();
+    export default ${name};
+  `;
 };

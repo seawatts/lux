@@ -2,6 +2,7 @@ import Ora from 'ora';
 import { green } from 'chalk';
 
 import fs from '../../fs';
+import template from '../../template';
 
 import exec from '../../../utils/exec';
 import driverFor from '../utils/driver-for';
@@ -19,6 +20,9 @@ import readmeTemplate from '../templates/readme';
 import licenseTemplate from '../templates/license';
 import gitignoreTemplate from '../templates/gitignore';
 
+/**
+ * @private
+ */
 export default async function create(name, database) {
   const driver = driverFor(database);
   const project = `${process.env.PWD}/${name}`;
@@ -113,22 +117,24 @@ export default async function create(name, database) {
     )
   ]);
 
-  console.log(`
-${green('create')} app/index.js
-${green('create')} app/routes.js
-${green('create')} bin/app.js
-${green('create')} config/environments/development.js
-${green('create')} config/environments/test.js
-${green('create')} config/environments/production.js
-${green('create')} config/database.js
-${green('create')} db/migrate
-${green('create')} db/seed.js
-${green('create')} README.md
-${green('create')} LICENSE
-${green('create')} package.json
-${green('create')} .babelrc
-${green('create')} .gitignore
-  `.substr(1).trim());
+  const logOutput = template`
+    ${green('create')} app/index.js
+    ${green('create')} app/routes.js
+    ${green('create')} bin/app.js
+    ${green('create')} config/environments/development.js
+    ${green('create')} config/environments/test.js
+    ${green('create')} config/environments/production.js
+    ${green('create')} config/database.js
+    ${green('create')} db/migrate
+    ${green('create')} db/seed.js
+    ${green('create')} README.md
+    ${green('create')} LICENSE
+    ${green('create')} package.json
+    ${green('create')} .babelrc
+    ${green('create')} .gitignore
+  `;
+
+  console.log(logOutput.substr(0, logOutput.length - 1));
 
   await Promise.all([
     generate('serializer', 'application', project),

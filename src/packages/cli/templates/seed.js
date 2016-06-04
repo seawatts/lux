@@ -1,7 +1,11 @@
-export default () => {
-  return `
-export default async () => {
+// @flow
+import template from '../../template';
 
-};
-  `.substr(1).trim();
-};
+/**
+ * @private
+ */
+export default (): string => template`
+  export default async function seed() {
+
+  }
+`;

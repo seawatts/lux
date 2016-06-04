@@ -4,6 +4,9 @@ import loader from '../../loader';
 
 const { env: { PWD } } = process;
 
+/**
+ * @private
+ */
 export default async function dbMigrate() {
   const { database: config } = loader(PWD, 'config');
   const migrations = loader(PWD, 'migrations');

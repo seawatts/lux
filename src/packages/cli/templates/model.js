@@ -1,11 +1,21 @@
+// @flow
 import { classify, camelize } from 'inflection';
+
+import template from '../../template';
 
 import indent from '../utils/indent';
 import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
-export default (name, attrs = []) => {
+/**
+ * @private
+ */
+export default (name: string, attrs: Array<string>): string => {
   name = classify(underscore(name));
+
+  if (!attrs) {
+    attrs = [];
+  }
 
   const body = entries(
     attrs
@@ -22,9 +32,9 @@ export default (name, attrs = []) => {
             belongsTo = [
               ...belongsTo,
 
-              indent(4) + `${related}: {\n` +
-              indent(6) + `inverse: '${inverse}'\n` +
-              indent(4) + '}'
+              indent(8) + `${related}: {\n` +
+              indent(10) + `inverse: '${inverse}'\n` +
+              indent(8) + '}'
             ];
             break;
 
@@ -32,9 +42,9 @@ export default (name, attrs = []) => {
             hasOne = [
               ...hasOne,
 
-              indent(4) + `${related}: {\n` +
-              indent(6) + `inverse: '${inverse}'\n` +
-              indent(4) + '}'
+              indent(8) + `${related}: {\n` +
+              indent(10) + `inverse: '${inverse}'\n` +
+              indent(8) + '}'
             ];
             break;
 
@@ -42,9 +52,9 @@ export default (name, attrs = []) => {
             hasMany = [
               ...hasMany,
 
-              indent(4) + `${related}: {\n` +
-              indent(6) + `inverse: '${inverse}'\n` +
-              indent(4) + '}'
+              indent(8) + `${related}: {\n` +
+              indent(10) + `inverse: '${inverse}'\n` +
+              indent(8) + '}'
             ];
             break;
         }
@@ -63,20 +73,20 @@ export default (name, attrs = []) => {
         str += '\n\n';
       }
 
-      str += `${indent(2)}static ${key} = {\n${value}\n${indent(2)}};`;
+      str += `${indent(index === 0 ? 2 : 6)}static ${key} = ` +
+        `{\n${value}\n${indent(6)}};`;
     }
 
     return str;
   }, '');
 
-  return `
-import { Model } from 'lux-framework';
+  return template`
+    import { Model } from 'lux-framework';
 
-class ${name} extends Model {
-${body}
-}
+    class ${name} extends Model {
+    ${body}
+    }
 
-export default ${name};
-
-  `.substr(1).trim();
+    export default ${name};
+  `;
 };

@@ -5,6 +5,9 @@ import fs, { rmrf, exists } from '../../fs';
 
 const { env: { PWD } } = process;
 
+/**
+ * @private
+ */
 export async function destroyType(type, name) {
   let path;
 
@@ -35,6 +38,9 @@ export async function destroyType(type, name) {
   }
 }
 
+/**
+ * @private
+ */
 export default async function destroy(type, name) {
   if (type === 'resource') {
     const routes = (await fs.readFileAsync(`${PWD}/app/routes.js`, 'utf8'))
