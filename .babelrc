@@ -1,17 +1,12 @@
 {
+  "presets": [
+    "lux"
+  ],
   "plugins": [
-    "external-helpers-2",
     "syntax-flow",
     "syntax-trailing-function-commas",
     "transform-decorators-legacy",
     "transform-flow-strip-types",
-    "transform-class-properties",
-    "transform-decorators",
-    "transform-es2015-destructuring",
-    "transform-es2015-parameters",
-    "transform-es2015-spread",
-    "transform-object-rest-spread",
-    "transform-async-to-generator",
-    "transform-exponentiation-operator"
+    "transform-decorators"
   ]
 }
