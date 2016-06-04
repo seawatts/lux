@@ -63,12 +63,6 @@ export default async function initialize(instance: Logger, isMaster: boolean, {
       await fs.mkdirAsync(logsDir);
     }
 
-    doesExist = await exists(logPath);
-
-    if (!doesExist) {
-      await fs.writeFileAsync(logPath, '', 'utf8');
-    }
-
     const writeStream = createWriteStream(logPath);
 
     stdout
