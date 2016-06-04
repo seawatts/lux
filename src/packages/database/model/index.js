@@ -14,10 +14,6 @@ import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
-import readonly from '../../../decorators/readonly';
-import nonenumerable from '../../../decorators/nonenumerable';
-import nonconfigurable from '../../../decorators/nonconfigurable';
-
 class Model {
   static table;
   static store;
@@ -35,20 +31,6 @@ class Model {
   static primaryKey = 'id';
   static defaultPerPage = 25;
 
-  @nonenumerable
-  @nonconfigurable
-  initialized = false;
-
-  @readonly
-  @nonenumerable
-  @nonconfigurable
-  initialValues = new Map();
-
-  @readonly
-  @nonenumerable
-  @nonconfigurable
-  dirtyAttributes = new Set();
-
   constructor(props = {}, initialize = true) {
     const {
       constructor: {
@@ -57,12 +39,33 @@ class Model {
       }
     } = this;
 
+    Object.defineProperties(this, {
+      initialized: {
+        value: initialize,
+        writable: !initialize,
+        enumerable: false,
+        configurable: !initialize
+      },
+
+      initialValues: {
+        value: new Map(),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
+      dirtyAttributes: {
+        value: new Set(),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      }
+    });
+
     Object.assign(
       this,
       pick(props, ...attributeNames, ...relationshipNames)
     );
-
-    this.initialized = initialize;
 
     return this;
   }
@@ -287,7 +290,12 @@ class Model {
       [primaryKey]: (await query)[0]
     });
 
-    instance.initialized = true;
+    Object.defineProperty(instance, 'initialized', {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
 
     await afterCreate(instance);
     await afterSave(instance);
@@ -461,8 +469,6 @@ class Model {
     return record ? record : null;
   }
 
-  @readonly
-  @nonconfigurable
   static getColumn(key) {
     const {
       attributes: {
@@ -473,8 +479,6 @@ class Model {
     return column;
   }
 
-  @readonly
-  @nonconfigurable
   static getColumnName(key) {
     const column = this.getColumn(key);
 
@@ -483,8 +487,6 @@ class Model {
     }
   }
 
-  @readonly
-  @nonconfigurable
   static getRelationship(key) {
     const {
       relationships: {

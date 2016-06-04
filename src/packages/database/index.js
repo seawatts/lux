@@ -13,11 +13,6 @@ import connect from './utils/connect';
 import createMigrations from './utils/create-migrations';
 import pendingMigrations from './utils/pending-migrations';
 
-import bound from '../../decorators/bound';
-import readonly from '../../decorators/readonly';
-import nonenumerable from '../../decorators/nonenumerable';
-import nonconfigurable from '../../decorators/nonconfigurable';
-
 const { env: { NODE_ENV = 'development' } } = process;
 
 /**
@@ -25,14 +20,17 @@ const { env: { NODE_ENV = 'development' } } = process;
  */
 class Database {
   path: string;
+
   debug: boolean;
+
   logger: Logger;
+
   config: Object;
+
+  schema: Function;
+
   connection: any;
 
-  @readonly
-  @nonenumerable
-  @nonconfigurable
   models: Map<string, typeof Model> = new Map();
 
   constructor({
@@ -81,6 +79,13 @@ class Database {
         configurable: false
       },
 
+      schema: {
+        value: () => this.connection.schema,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
       connection: {
         value: connect(path, config),
         writable: false,
@@ -90,17 +95,6 @@ class Database {
     });
 
     return this;
-  }
-
-  @bound
-  schema(): Function {
-    const {
-      connection: {
-        schema
-      }
-    } = this;
-
-    return schema;
   }
 
   modelFor(type: string): typeof Model  {

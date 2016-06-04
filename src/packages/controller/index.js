@@ -4,8 +4,6 @@ import omit from '../../utils/omit';
 import getRecord from './utils/get-record';
 import formatInclude from './utils/format-include';
 
-import action from './decorators/action';
-
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import type Database, { Collection } from '../database';
@@ -329,7 +327,6 @@ class Controller {
     }
   }
 
-  @action
   /**
    *
    */
@@ -371,7 +368,6 @@ class Controller {
     }, true);
   }
 
-  @action
   /**
    *
    */
@@ -379,7 +375,6 @@ class Controller {
     return getRecord(this, req, res);
   }
 
-  @action
   /**
    *
    */
@@ -395,7 +390,6 @@ class Controller {
     return await this.model.create(attributes);
   }
 
-  @action
   /**
    *
    */
@@ -417,7 +411,6 @@ class Controller {
     return record;
   }
 
-  @action
   /**
    *
    */
@@ -431,7 +424,6 @@ class Controller {
     return record;
   }
 
-  @action
   /**
    *
    */
@@ -440,5 +432,4 @@ class Controller {
   }
 }
 
-export { default as action } from './decorators/action';
 export default Controller;

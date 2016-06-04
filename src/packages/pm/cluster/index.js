@@ -7,8 +7,6 @@ import { red, green } from 'chalk';
 
 import range from '../../../utils/range';
 
-import bound from '../../../decorators/bound';
-
 import type { Worker } from 'cluster';
 import type Logger from '../../logger';
 
@@ -66,7 +64,7 @@ class Cluster extends EventEmitter {
       exec: joinPath(path, 'dist/boot.js')
     });
 
-    process.on('update', this.reload);
+    process.on('update', () => this.reload());
     this.forkAll().then(() => this.emit('ready'));
 
     return this;
@@ -161,7 +159,6 @@ class Cluster extends EventEmitter {
     });
   }
 
-  @bound
   async reload(): Promise<void> {
     const workers: Array<[Worker, Worker]> = Array.from(this.workers)
       .reduce((arr, item, idx, src) => {

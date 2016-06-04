@@ -3,8 +3,6 @@ import Serializer from '../serializer';
 
 import tryCatch from '../../utils/try-catch';
 
-import bound from '../../decorators/bound';
-
 const idPattern = /(?![\=])(\d+)/g;
 
 /**
@@ -16,6 +14,11 @@ class Router {
   controllers;
 
   constructor() {
+    const {
+      route,
+      resource
+    } = this;
+
     Object.defineProperties(this, {
       routes: {
         value: new Map(),
@@ -36,13 +39,26 @@ class Router {
         writable: false,
         enumerable: false,
         configurable: false
+      },
+
+      route: {
+        value: (path, options) => route.call(this, path, options),
+        writable: false,
+        enumerable: false,
+        configurable: false
+      },
+
+      resource: {
+        value: (name, options) => resource.call(this, name, options),
+        writable: false,
+        enumerable: false,
+        configurable: false
       }
     });
 
     return this;
   }
 
-  @bound
   route(path, options = {}) {
     const { routes, controllers } = this;
     const { method, action } = options;
@@ -57,7 +73,6 @@ class Router {
     routes.set(`${route.method}:/${route.staticPath}`, route);
   }
 
-  @bound
   resource(name, options = {}) {
     this.route(name, {
       method: 'GET',

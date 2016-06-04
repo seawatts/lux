@@ -11,7 +11,5 @@ decl
 [options]
 esproposal.class_instance_fields=enable
 esproposal.class_static_fields=enable
-esproposal.decorators=ignore
-esproposal.export_star_as=enable
 
 unsafe.enable_getters_and_setters=true

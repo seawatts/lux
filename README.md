@@ -30,7 +30,6 @@ This isn't another wrapper around [Express](http://expressjs.com/) or a framewor
   * Classes
   * Modules
   * Promises & async/await
-  * Decorators
   * Arrow Functions
   * etc.
 
@@ -96,7 +95,6 @@ With Lux your code from before can now look like this:
 
 ```javascript
 class PostsController extends Controller {
-  @action
   index(req, res) {
     return Post.findAll();
   }

@@ -7,8 +7,6 @@ import { Model } from '../database';
 import tryCatch from '../../utils/try-catch';
 import underscore from '../../utils/underscore';
 
-import bound from '../../decorators/bound';
-
 /**
  * The `Serializer` class is where you declare the specific attributes and
  * relationships you would like to include for a particular resource (`Model`).
@@ -531,7 +529,6 @@ class Serializer {
     return stream;
   }
 
-  @bound
   /**
    * @private
    */
