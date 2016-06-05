@@ -15,23 +15,72 @@ import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
 class Model {
+  /**
+   * @private
+   */
   static table;
+
+  /**
+   * @private
+   */
   static store;
+
+  /**
+   *
+   */
   static logger;
+
+  /**
+   * @private
+   */
   static serializer;
-  static attributes;
-  static belongsTo;
-  static hasOne;
-  static hasMany;
 
-  static _tableName;
+  /**
+   * @private
+   */
+  static attributes: {};
 
-  static hooks = {};
-  static validates = {};
-  static primaryKey = 'id';
-  static defaultPerPage = 25;
+  /**
+   *
+   */
+  static belongsTo: {};
 
-  constructor(props = {}, initialize = true) {
+  /**
+   *
+   */
+  static hasOne: {};
+
+  /**
+   *
+   */
+  static hasMany: {};
+
+  /**
+   * @private
+   */
+  static _tableName: ?string;
+
+  /**
+   *
+   */
+  static hooks: {} = {};
+
+  /**
+   *
+   */
+  static validates: {} = {};
+
+  /**
+   *
+   */
+  static primaryKey: string = 'id';
+
+  /**
+   *
+   */
+  static defaultPerPage: number = 25;
+
+  constructor(attrs: {} = {}, initialize: boolean = true): Model {
     const {
       constructor: {
         attributeNames,
@@ -64,34 +113,34 @@ class Model {
 
     Object.assign(
       this,
-      pick(props, ...attributeNames, ...relationshipNames)
+      pick(attrs, ...attributeNames, ...relationshipNames)
     );
 
     return this;
   }
 
-  get isDirty() {
+  get isDirty(): boolean {
     return Boolean(this.dirtyAttributes.size);
   }
 
-  get modelName() {
+  get modelName(): string {
     return this.constructor.modelName;
   }
 
-  static get modelName() {
+  static get modelName(): string {
     return dasherize(underscore(this.name));
   }
 
-  static get tableName() {
+  static get tableName(): string {
     return this._tableName ?
       this._tableName : pluralize(underscore(this.name));
   }
 
-  static set tableName(value) {
+  static set tableName(value): void {
     this._tableName = value;
   }
 
-  static get relationships() {
+  static get relationships(): {} {
     const {
       belongsTo,
       hasOne,
@@ -105,15 +154,15 @@ class Model {
     };
   }
 
-  static get attributeNames() {
+  static get attributeNames(): Array<string> {
     return Object.keys(this.attributes);
   }
 
-  static get relationshipNames() {
+  static get relationshipNames(): Array<string> {
     return Object.keys(this.relationships);
   }
 
-  async update(props = {}) {
+  async update(props = {}): Model {
     const {
       constructor: {
         primaryKey,
@@ -170,7 +219,7 @@ class Model {
     return this;
   }
 
-  async destroy() {
+  async destroy(): Model {
     const {
       constructor: {
         primaryKey,
@@ -212,7 +261,7 @@ class Model {
     return this;
   }
 
-  format(dest, ...only) {
+  format(dest: string, ...only: Array<string>): {} {
     const {
       constructor: {
         attributes
@@ -469,7 +518,7 @@ class Model {
     return record ? record : null;
   }
 
-  static getColumn(key) {
+  static getColumn(key): {} {
     const {
       attributes: {
         [key]: column
@@ -479,7 +528,7 @@ class Model {
     return column;
   }
 
-  static getColumnName(key) {
+  static getColumnName(key): string {
     const column = this.getColumn(key);
 
     if (column) {
@@ -487,7 +536,7 @@ class Model {
     }
   }
 
-  static getRelationship(key) {
+  static getRelationship(key): {} {
     const {
       relationships: {
         [key]: relationship

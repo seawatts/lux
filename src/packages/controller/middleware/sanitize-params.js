@@ -1,12 +1,40 @@
+// @flow
 import { camelize } from 'inflection';
 
 import pick from '../../../utils/pick';
 import entries from '../../../utils/entries';
 
-export default function sanitizeParams(req, res) {
-  const { modelName, model: { relationshipNames } } = this;
+import type { IncomingMessage, ServerResponse } from 'http';
+
+/**
+ * @private
+ */
+export default function sanitizeParams(
+  req: IncomingMessage,
+  res: ServerResponse
+): void {
+  const {
+    modelName,
+    model: {
+      relationshipNames
+    }
+  }: {
+    modelName: string,
+    model: {
+      relationshipNames: Array<string>
+    }
+  } = this;
+
   const params = { ...req.params };
-  let { page, limit, sort, filter, include, fields } = params;
+
+  let {
+    page,
+    limit,
+    sort,
+    filter,
+    include,
+    fields
+  } = params;
 
   if (!page) {
     page = 1;
@@ -92,7 +120,12 @@ export default function sanitizeParams(req, res) {
   };
 
   if (/^(POST|PATCH)$/g.test(req.method)) {
-    let { type, attributes } = params.data;
+    let {
+      data: {
+        type,
+        attributes = {}
+      }
+    } = params;
 
     Object.assign(req.params, {
       data: {
