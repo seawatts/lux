@@ -6,6 +6,7 @@ import formatInclude from './utils/format-include';
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
+import type Cache from '../cache';
 import type Database, { Collection } from '../database';
 import type Serializer from '../serializer';
 
@@ -19,6 +20,16 @@ import type Serializer from '../serializer';
  * and returns data relative to what the client has request.
  */
 class Controller {
+  /**
+   * A reference to the instance of `Cache`.
+   *
+   * @property cache
+   * @memberof Controller
+   * @instance
+   * @readonly
+   */
+  cache: Cache;
+
   /**
    * Whitelisted parameter keys to allow in incoming PATCH and POST requests.
    *
@@ -164,6 +175,7 @@ class Controller {
   _filter: Array<string> = [];
 
   constructor({
+    cache,
     store,
     model,
     domain,
@@ -171,6 +183,7 @@ class Controller {
     serializers = new Map(),
     parentController
   }: {
+    cache: Cache,
     store: Database,
     model: ?Model<T>,
     domain: string,
@@ -200,6 +213,13 @@ class Controller {
     }
 
     Object.defineProperties(this, {
+      cache: {
+        value: cache,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      },
+
       model: {
         value: model,
         writable: false,
@@ -335,16 +355,20 @@ class Controller {
    * relationships, and sparse fieldsets via query parameters.
    */
   async index(req: IncomingMessage, res: ServerResponse): Promise<Collection> {
-    const { model, modelName, relationships } = this;
+    const {
+      model,
+      modelName,
+      relationships
+    } = this;
 
     let {
       params: {
+        sort,
         page,
         limit,
         fields,
         include = [],
-        sort: order,
-        filter: where
+        filter
       }
     } = req;
 
@@ -362,14 +386,11 @@ class Controller {
 
     include = formatInclude(model, include, includedFields, relationships);
 
-    return await model.findAll({
-      page,
-      limit,
-      where,
-      order,
-      select,
-      include
-    }, true);
+    return await model.select(...select)
+      .limit(limit)
+      .page(page)
+      .where(filter)
+      .order(...sort);
   }
 
   /**

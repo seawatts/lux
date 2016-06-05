@@ -12,7 +12,7 @@ export default async function createBootScript(dir: string): Promise<void> {
     const { env: { PWD, PORT } } = process;
     const { Application, config, database } = require('./bundle');
 
-    new Application(
+    module.exports = new Application(
       Object.assign(config, {
         database,
         path: PWD,

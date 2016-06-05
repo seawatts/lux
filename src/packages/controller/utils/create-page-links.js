@@ -34,8 +34,22 @@ export default function createPageLinks(domain, path, params, total) {
     }
   }
 
-  if (sort !== 'createdAt') {
-    sort = dasherize(underscore(sort));
+  if (Array.isArray(sort)) {
+    sort = sort.reduce((sortStr, value, index) => {
+      switch (index)  {
+        case 0:
+          sortStr += dasherize(underscore(value));
+          break;
+
+        case 1:
+          if (value === 'DESC') {
+            sortStr = `-${sortStr}`;
+          }
+          break;
+      }
+
+      return sortStr;
+    }, '');
 
     first += `&sort=${sort}`;
     last += `&sort=${sort}`;

@@ -1,10 +1,12 @@
 // @flow
 import initialize from './initialize';
 
+import type Cache from '../cache';
 import type Database from '../database';
 import type Logger from '../logger';
 import type Router from '../router';
 import type Server from '../server';
+import typeof { Model } from '../database';
 
 /**
  * The `Application` class is responsible for constructing an application and
@@ -35,6 +37,16 @@ class Application {
   port: number;
 
   /**
+   * A reference to the instance of `Cache`.
+   *
+   * @property cache
+   * @memberof Application
+   * @instance
+   * @readonly
+   */
+  cache: Cache;
+
+  /**
    * A reference to the instance of `Database`.
    *
    * @property store
@@ -44,6 +56,16 @@ class Application {
    * @private
    */
   store: Database;
+
+  /**
+   * A map containing each `Model` class in an application instance.
+   *
+   * @property models
+   * @memberof Application
+   * @instance
+   * @readonly
+   */
+  models: Map<string, Model>;
 
   /**
    * The public domain where the `Application` instance is located. This is
@@ -99,20 +121,27 @@ class Application {
     path,
     port,
     domain = 'http://localhost',
-    database
+    database,
+    cache
   }: {
     log: boolean,
     path: string,
     port: number,
     domain: string,
-    database: {}
+    database: {},
+
+    cache: {
+      type: 'memory' | 'redis' | mixed,
+      prefix: string
+    }
   } = {}): Promise<Application> {
     return initialize(this, {
       log,
       path,
       port,
       domain,
-      database
+      database,
+      cache
     });
   }
 }

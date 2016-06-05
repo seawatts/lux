@@ -20,7 +20,7 @@ type params = {
   include: Array<string>;
   limit: number;
   page: number;
-  sort: string;
+  sort: string | [string, string];
 };
 
 declare module 'http' {

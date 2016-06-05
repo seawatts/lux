@@ -96,7 +96,7 @@ With Lux your code from before can now look like this:
 ```javascript
 class PostsController extends Controller {
   index(req, res) {
-    return Post.findAll();
+    return Post.all();
   }
 }
 ```

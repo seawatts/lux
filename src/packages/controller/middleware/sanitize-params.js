@@ -15,6 +15,7 @@ export default function sanitizeParams(
 ): void {
   const {
     modelName,
+
     model: {
       relationshipNames
     }
@@ -26,6 +27,8 @@ export default function sanitizeParams(
   } = this;
 
   const params = { ...req.params };
+
+  let sortDirection;
 
   let {
     page,
@@ -49,19 +52,25 @@ export default function sanitizeParams(
   }
 
   if (!sort) {
-    sort = 'createdAt';
+    sort = ['createdAt', 'ASC'];
   } else {
-    if (sort.charAt(0) === '-') {
-      sort = `-${sort.substr(1).replace(/\-/g, '_')}`;
-    } else {
-      sort = sort.replace(/\-/g, '_');
-    }
+    if (!Array.isArray(sort)) {
+      if (sort.charAt(0) === '-') {
+        sort = sort.substr(1).replace(/\-/g, '_');
+        sortDirection = 'DESC';
+      } else {
+        sort = sort.replace(/\-/g, '_');
+        sortDirection = 'ASC';
+      }
 
-    sort = camelize(sort, true);
+      sort = camelize(sort, true);
 
-    if (this.sort.indexOf(sort) < 0 &&
-      this.sort.indexOf(sort.substr(1)) < 0) {
+      if (this.sort.indexOf(sort) < 0) {
         sort = 'createdAt';
+        sortDirection = 'ASC';
+      }
+
+      sort = [sort, sortDirection];
     }
   }
 

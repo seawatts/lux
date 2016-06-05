@@ -1,6 +1,7 @@
 // @flow
 import { pluralize, singularize } from 'inflection';
 
+import Cache from '../cache';
 import Database from '../database';
 import Logger from '../logger';
 import Router from '../router';
@@ -22,14 +23,21 @@ export default async function initialize(app: Application, {
   path,
   port,
   domain,
-  database
+  database,
+  cache: cacheConfig
 }: {
   log: boolean,
   path: string,
   port: number,
   domain: string,
-  database: {}
+  database: {},
+
+  cache: {
+    type: 'memory' | 'redis' | mixed,
+    prefix: string
+  }
 } = {}): Promise<Application> {
+  const cache = new Cache(cacheConfig);
   const routes = loader(path, 'routes');
   const models = loader(path, 'models');
   const controllers = loader(path, 'controllers');
@@ -63,6 +71,13 @@ export default async function initialize(app: Application, {
 
     port: {
       value: port,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    },
+
+    cache: {
+      value: cache,
       writable: false,
       enumerable: true,
       configurable: false
@@ -106,6 +121,8 @@ export default async function initialize(app: Application, {
 
   await store.define(models);
 
+  app.models = models;
+
   models.forEach((model, name) => {
     const resource = pluralize(name);
 
@@ -116,12 +133,20 @@ export default async function initialize(app: Application, {
     if (!serializers.get(resource)) {
       throw new SerializerMissingError(resource);
     }
+
+    Object.defineProperty(model, 'cache', {
+      value: cache,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    });
   });
 
   serializers.forEach((serializer, name) => {
     const model = models.get(singularize(name));
 
     serializer = new serializer({
+      cache,
       model,
       domain,
       serializers
@@ -136,6 +161,7 @@ export default async function initialize(app: Application, {
 
   let appController = controllers.get('application');
   appController = new appController({
+    cache,
     store,
     domain,
     serializers,
@@ -149,6 +175,7 @@ export default async function initialize(app: Application, {
       const model = store.modelFor(singularize(key));
 
       controller = new controller({
+        cache,
         store,
         model,
         domain,

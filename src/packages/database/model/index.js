@@ -1,20 +1,27 @@
 import { dasherize, pluralize } from 'inflection';
 
-import Collection from '../collection';
+import Query from '../query';
 import { sql } from '../../logger';
 
 import validate from './utils/validate';
-import getOffset from './utils/get-offset';
-import formatSelect from './utils/format-select';
-import fetchHasMany from './utils/fetch-has-many';
 
-import K from '../../../utils/k';
 import pick from '../../../utils/pick';
 import omit from '../../../utils/omit';
 import entries from '../../../utils/entries';
 import underscore from '../../../utils/underscore';
 
+import type Cache from '../../cache';
+
 class Model {
+  /**
+   * A reference to the instance of `Cache`.
+   *
+   * @property cache
+   * @memberof Model
+   * @readonly
+   */
+  static cache: Cache;
+
   /**
    * @private
    */
@@ -370,152 +377,36 @@ class Model {
     return Number.isFinite(count) ? count : 0;
   }
 
-  static async find(pk, options = {}): Model {
-    const { primaryKey, tableName } = this;
-
-    return await this.findOne({
-      ...options,
-      where: {
-        [`${tableName}.${primaryKey}`]: pk
-      }
-    });
+  static all(): Query {
+    return new Query(this).all();
   }
 
-  static async findAll(options: {} = {}, count: boolean = false): Collection {
-    const {
-      table,
-      tableName,
-      primaryKey,
-
-      store: {
-        debug
-      }
-    } = this;
-
-    let {
-      page,
-      order,
-      limit,
-      where,
-      select,
-      include = []
-    } = options;
-
-    if (!limit) {
-      limit = this.defaultPerPage;
-    }
-
-    select = formatSelect(this, select);
-
-    include = include
-      .map(included => {
-        let name, attrs;
-
-        if (typeof included === 'string') {
-          name = included;
-        } else if (typeof included === 'object') {
-          [[name, attrs]] = entries(included);
-        }
-
-        included = this.getRelationship(name);
-
-        if (!included) {
-          return null;
-        }
-
-        if (!attrs) {
-          attrs = included.model.attributeNames;
-        }
-
-        return {
-          name,
-          attrs,
-          relationship: included
-        };
-      })
-      .filter(included => included);
-
-    let total: ?number;
-
-    let related = include.filter(({ relationship: { type } }) => {
-      return type === 'hasMany';
-    });
-
-    let records = table()
-      .select(select)
-      .where(where)
-      .limit(limit)
-      .offset(getOffset(page, limit));
-
-    if (order) {
-      if (typeof order === 'string') {
-        const direction = order.charAt(0) === '-' ? 'desc' : 'asc';
-
-        records = records.orderBy(
-          `${tableName}.` + this.getColumnName(
-            direction === 'desc' ? order.substr(1) : order
-          ) || 'created_at',
-          direction
-        );
-      } else if (Array.isArray(order)) {
-        records = records.orderBy(order[0], order[1]);
-      }
-    }
-
-    include
-      .filter(({ relationship: { type } }) => type !== 'hasMany')
-      .forEach(({ name, attrs, relationship: { type, model, foreignKey } }) => {
-        records = records.select(
-          ...formatSelect(model, attrs, `${name}.`)
-        );
-
-        if (type === 'belongsTo') {
-          records = records.leftOuterJoin(
-            model.tableName,
-            `${tableName}.${foreignKey}`,
-            '=',
-            `${model.tableName}.${model.primaryKey}`
-          );
-        } else if (type === 'hasOne') {
-          records = records.leftOuterJoin(
-            model.tableName,
-            `${tableName}.${primaryKey}`,
-            '=',
-            `${model.tableName}.${foreignKey}`
-          );
-        }
-      });
-
-    if (debug) {
-      const { logger } = this;
-
-      records.on('query', () => {
-        setImmediate(() => logger.info(sql`${records.toString()}`));
-      });
-    }
-
-    [records, total] = await Promise.all([
-      records,
-      count ? this.count() : K.call(null)
-    ]);
-
-    related = await fetchHasMany(this, related, records);
-
-    return new Collection({
-      records,
-      related,
-      total,
-      model: this
-    });
+  static find(pk: number): Query {
+    return new Query(this).find(pk);
   }
 
-  static async findOne(options = {}): Model {
-    const [record] = await this.findAll({
-      ...options,
-      limit: 1
-    });
+  static page(num: number): Query {
+    return new Query(this).page(num);
+  }
 
-    return record ? record : null;
+  static limit(amount: number): Query {
+    return new Query(this).limit(amount);
+  }
+
+  static offset(amount: number): Query {
+    return new Query(this).offset(amount);
+  }
+
+  static order(attr: string, direction?: string): Query {
+    return new Query(this).order(attr, direction);
+  }
+
+  static where(params): Query {
+    return new Query(this).where(params);
+  }
+
+  static select(...params: Array<string>): Query {
+    return new Query(this).select(...params);
   }
 
   static getColumn(key): {} {

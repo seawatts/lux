@@ -7,11 +7,23 @@ import { Model } from '../database';
 import tryCatch from '../../utils/try-catch';
 import underscore from '../../utils/underscore';
 
+import type Cache from '../cache';
+
 /**
  * The `Serializer` class is where you declare the specific attributes and
  * relationships you would like to include for a particular resource (`Model`).
  */
 class Serializer {
+  /**
+   * A reference to the instance of `Cache`.
+   *
+   * @property cache
+   * @memberof Serializer
+   * @instance
+   * @readonly
+   */
+  cache: Cache;
+
   /**
    * The resolved `Model` that a `Serializer` instance represents.
    *
@@ -226,15 +238,24 @@ class Serializer {
    * @private
    */
    constructor({
+     cache,
      model,
      domain,
      serializers
    }: {
+     cache: Cache,
      model: typeof Model,
      domain: string,
      serializers: Map<string, Serializer>
    } = {}) {
      Object.defineProperties(this, {
+       cache: {
+         value: cache,
+         writable: false,
+         enumerable: false,
+         configurable: false
+       },
+
        model: {
          value: model,
          writable: false,
