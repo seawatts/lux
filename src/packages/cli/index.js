@@ -87,11 +87,11 @@ export default function CLI() {
         process.env.NODE_ENV = environment;
 
         if (hot) {
-          const watcher = new Watcher(PWD);
+          const watcher = await new Watcher(PWD);
 
-          watcher.on('change', async (type, file) => {
+          watcher.on('change', async (changed) => {
             await compile(PWD, environment);
-            process.emit('update');
+            process.emit('update', changed);
           });
         }
 

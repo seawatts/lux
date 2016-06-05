@@ -1,11 +1,9 @@
 // @flow
+import { Client } from 'fb-watchman';
+import { FSWatcher } from 'fs';
 import { EventEmitter } from 'events';
-import { join as joinPath } from 'path';
-import { watch } from 'fs';
 
-import isJSFile from '../fs/utils/is-js-file';
-
-import type { FSWatcher } from 'fs';
+import initialize from './initialize';
 
 /**
  * @private
@@ -13,42 +11,21 @@ import type { FSWatcher } from 'fs';
 class Watcher extends EventEmitter {
   path: string;
 
-  client: FSWatcher;
+  client: Client | FSWatcher;
 
-  constructor(path: string): Watcher {
+  constructor(path: string): Promise<Watcher> {
     super();
-
-    path = joinPath(path, 'app');
-
-    const client = watch(path, {
-      recursive: true
-    }, (type, filename) => {
-      if (isJSFile(filename)) {
-        this.emit('change', type, filename);
-      }
-    });
-
-    Object.defineProperties(this, {
-      path: {
-        value: path,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      },
-
-      client: {
-        value: client,
-        writable: false,
-        enumerable: true,
-        configurable: false
-      }
-    });
-
-    return this;
+    return initialize(this, path);
   }
 
   destroy(): void {
-    this.client.close();
+    const { client } = this;
+
+    if (client instanceof FSWatcher) {
+      client.close();
+    } else if (client instanceof Client) {
+      client.end();
+    }
   }
 }
 

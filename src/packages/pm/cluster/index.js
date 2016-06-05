@@ -64,7 +64,14 @@ class Cluster extends EventEmitter {
       exec: joinPath(path, 'dist/boot.js')
     });
 
-    process.on('update', () => this.reload());
+    process.on('update', (changed) => {
+      changed.forEach(({ name: filename }) => {
+        logger.info(`${green('update')} ${filename}`);
+      });
+
+      this.reload();
+    });
+
     this.forkAll().then(() => this.emit('ready'));
 
     return this;
