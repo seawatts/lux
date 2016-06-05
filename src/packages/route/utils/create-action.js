@@ -19,7 +19,7 @@ export default function createAction(
     ...controller.middleware,
 
     async function (req: IncomingMessage, res: ServerResponse) {
-      const { domain } = controller;
+      const { model, domain } = controller;
       const { url: { pathname } } = req;
       let links = { self: domain + pathname };
       let data = await action.call(controller, req, res);
@@ -30,6 +30,7 @@ export default function createAction(
 
           params: {
             fields,
+            filter,
             include
           },
 
@@ -40,9 +41,11 @@ export default function createAction(
 
         if (data instanceof Collection || data instanceof Model) {
           if (data instanceof Collection) {
+            const total = await model.count(filter);
+
             links = {
               self: domain + path,
-              ...createPageLinks(domain, pathname, params, data.total)
+              ...createPageLinks(domain, pathname, params, total)
             };
           }
 

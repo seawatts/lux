@@ -27,18 +27,14 @@ export default function formatInclude(model, include, fields, relationships) {
         fieldsForRelationship = relatedAttrs;
       }
 
-      value = {
-        [value]: [
-          'id',
-          ...fieldsForRelationship
-        ]
-      };
+      included[value] = [
+        'id',
+        ...fieldsForRelationship
+      ];
     } else {
-      value = {
-        [value]: ['id']
-      };
+      included[value] = ['id'];
     }
 
-    return [...included, value];
-  }, []);
+    return included;
+  }, {});
 }

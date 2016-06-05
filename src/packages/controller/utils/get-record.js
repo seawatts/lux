@@ -39,7 +39,9 @@ export default async function getRecord(
 
       include = formatInclude(model, include, includedFields, relationships);
 
-      return await model.find(pk).select(...select);
+      return await model.find(pk)
+        .select(...select)
+        .include(include);
     }
   });
 }

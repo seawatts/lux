@@ -387,6 +387,7 @@ class Controller {
     include = formatInclude(model, include, includedFields, relationships);
 
     return await model.select(...select)
+      .include(include)
       .limit(limit)
       .page(page)
       .where(filter)

@@ -409,6 +409,10 @@ class Model {
     return new Query(this).select(...params);
   }
 
+  static include(...relationships: Array<Object|string>): Query {
+    return new Query(this).include(...relationships);
+  }
+
   static getColumn(key): {} {
     const {
       attributes: {

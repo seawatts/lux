@@ -8,16 +8,12 @@ import entries from '../../../utils/entries';
  * @private
  */
 class Collection extends Array<Model> {
-  total: number;
-
   constructor({
     model,
-    total,
     records = [],
     related = {}
   }: {
     model: typeof Model,
-    total: ?number,
     records: Array<Object>,
     related: Object
   } = {}): Collection {
@@ -82,12 +78,6 @@ class Collection extends Array<Model> {
 
       return new model(row);
     });
-
-    if (!total) {
-      total = length;
-    }
-
-    this.total = total;
 
     insert(this, records);
 

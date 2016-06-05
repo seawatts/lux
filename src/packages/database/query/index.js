@@ -159,6 +159,86 @@ class Query {
     return this;
   }
 
+  include(...relationships: Array<Object|string>) {
+    const { model } = this;
+    let included;
+
+    if (relationships.length === 1 && typeof relationships[0] === 'object') {
+      included = entries(relationships[0]).map(([
+        name,
+        attrs
+      ]: [
+        string,
+        Array<string>
+      ]) => {
+        const relationship = model.getRelationship(name);
+
+        if (!attrs.length) {
+          attrs = relationship.model.attributeNames;
+        }
+
+        return {
+          name,
+          attrs,
+          relationship
+        };
+      });
+    } else {
+      included = relationships.map(name => {
+        const relationship = model.getRelationship(name);
+        const attrs = relationship.model.attributeNames;
+
+        return {
+          name,
+          attrs,
+          relationship
+        };
+      });
+    }
+
+    included = included
+      .filter(relationship => Boolean(relationship))
+      .filter(({
+        relationship: {
+          type
+        }
+      }: {
+        relationship: {
+          type: string,
+          model: Model,
+          foreignKey: string
+        }
+      }) => type !== 'hasMany')
+      .reduce((arr, { name, attrs, relationship }) => {
+        arr.push([
+          'select',
+          formatSelect(relationship.model, attrs, `${name}.`)
+        ]);
+
+        if (relationship.type === 'belongsTo') {
+          arr.push(['leftOuterJoin', [
+            relationship.model.tableName,
+            `${model.tableName}.${relationship.foreignKey}`,
+            '=',
+            `${relationship.model.tableName}.${relationship.model.primaryKey}`
+          ]]);
+        } else if (relationship.type === 'hasOne') {
+          arr.push(['leftOuterJoin', [
+            relationship.model.tableName,
+            `${model.tableName}.${model.primaryKey}`,
+            '=',
+            `${relationship.model.tableName}.${relationship.foreignKey}`
+          ]]);
+        }
+
+        return arr;
+      }, []);
+
+    this.snapshots.push(...included);
+
+    return this;
+  }
+
   /**
    * @private
    */
@@ -202,10 +282,10 @@ class Query {
       await model.cache.set(snapshots, results);
     }
 
-    return collection ? results : results.shift();
+    return collection ? results : Array.from(results)[0];
   }
 
-  async then(
+  then(
     onData: ?(data: ?Model|Collection) => void,
     onError: ?(err: Error) => void
   ): Promise<?Model|Collection> {
