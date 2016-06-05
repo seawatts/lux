@@ -84,6 +84,9 @@ export default function CLI() {
       hot = (environment === 'development')
     } = {}) => {
       return tryCatch(async () => {
+        port = parseInt(port, 10);
+
+        process.env.PORT = port;
         process.env.NODE_ENV = environment;
 
         if (hot) {
