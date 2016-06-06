@@ -249,40 +249,34 @@ class Query {
       collection
     } = this;
 
-    let results = await model.cache.get(snapshots);
-
-    if (!results) {
-      if (!snapshots.some(([name]) => name === 'select')) {
-        this.select(...this.model.attributeNames);
-      }
-
-      const records = snapshots.reduce((query, [name, params]) => {
-        const method = query[name];
-
-        if (Array.isArray(params)) {
-          return method.apply(query, params);
-        } else {
-          return method.call(query, params);
-        }
-      }, model.table());
-
-      if (model.store.debug) {
-        records.on('query', () => {
-          setImmediate(() => model.logger.info(sql`${records.toString()}`));
-        });
-      }
-
-      results = new Collection({
-        model,
-        total: 0,
-        related: {},
-        records: await records
-      });
-
-      await model.cache.set(snapshots, results);
+    if (!snapshots.some(([name]) => name === 'select')) {
+      this.select(...this.model.attributeNames);
     }
 
-    return collection ? results : Array.from(results)[0];
+    const records = snapshots.reduce((query, [name, params]) => {
+      const method = query[name];
+
+      if (Array.isArray(params)) {
+        return method.apply(query, params);
+      } else {
+        return method.call(query, params);
+      }
+    }, model.table());
+
+    if (model.store.debug) {
+      records.on('query', () => {
+        setImmediate(() => model.logger.info(sql`${records.toString()}`));
+      });
+    }
+
+    const results = new Collection({
+      model,
+      total: 0,
+      related: {},
+      records: await records
+    });
+
+    return collection ? results : results.shift();
   }
 
   then(

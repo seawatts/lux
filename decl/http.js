@@ -6,6 +6,8 @@ import {
 
 import { Model } from '../src/packages/database';
 
+import type Route from '../src/packages/route';
+
 type params = {
   data?: {
     id: number | string | Buffer;
@@ -17,7 +19,7 @@ type params = {
   fields: Object;
   filter: Object;
   id?: number | string | Buffer;
-  include: Array<string>;
+  include: Array<string> | Object;
   limit: number;
   page: number;
   sort: string | [string, string];
@@ -27,8 +29,10 @@ declare module 'http' {
   declare class Server extends http$Server {}
 
   declare class IncomingMessage extends http$IncomingMessage {
+    route?: Route;
     params: params;
     record?: Model;
+    method: string;
 
     parsedURL: {
       protocol?: string;

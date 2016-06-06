@@ -2,7 +2,11 @@
 import { Collection, Model } from '../../database';
 
 import sanitizeParams from '../../controller/middleware/sanitize-params';
-import createPageLinks from '../../controller/utils/create-page-links';
+import setInclude from '../../controller/middleware/set-include';
+import setFields from '../../controller/middleware/set-fields';
+import setLimit from '../../controller/middleware/set-limit';
+
+import createPageLinks from './create-page-links';
 
 import type Controller from '../../controller';
 import type { IncomingMessage, ServerResponse } from 'http';
@@ -16,6 +20,10 @@ export default function createAction(
 ): Array<Function> {
   return [
     sanitizeParams,
+    setInclude,
+    setFields,
+    setLimit,
+
     ...controller.middleware,
 
     async function (req: IncomingMessage, res: ServerResponse) {

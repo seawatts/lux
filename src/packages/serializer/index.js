@@ -1,6 +1,6 @@
 // @flow
 import { Readable } from 'stream';
-import { dasherize, pluralize, camelize } from 'inflection';
+import { dasherize, pluralize } from 'inflection';
 
 import { Model } from '../database';
 
@@ -291,15 +291,6 @@ class Serializer {
   /**
    * @private
    */
-  fieldsFor(name: string, fields: Object = {}): Array<string> {
-    const match: ?Array<string> = fields[camelize(underscore(name), true)];
-
-    return match ? [...match] : [];
-  }
-
-  /**
-   * @private
-   */
    attributesFor(item: Model, fields: Array<string> = []): Object {
      return (fields.length ? fields : this.attributes)
        .reduce((hash, attr) => {
@@ -316,8 +307,7 @@ class Serializer {
     */
    relationshipsFor(
      item: Model,
-     include: Array<any>,
-     fields: Object
+     include: Object
    ): Object {
     const { domain, hasOne, hasMany } = this;
     const hash: Object = { data: {}, included: [] };
@@ -341,7 +331,7 @@ class Serializer {
             }
           };
 
-          if (include.indexOf(key) >= 0) {
+          if (include[key]) {
             const {
               constructor: {
                 serializer: relatedSerializer
@@ -350,7 +340,7 @@ class Serializer {
 
             if (relatedSerializer) {
               hash.included.push(
-                relatedSerializer.serializeOne(related, [], fields)
+                relatedSerializer.serializeOne(related, [], include[key])
               );
             }
           }
@@ -375,7 +365,7 @@ class Serializer {
 
               const type: string = pluralize(modelName);
 
-              if (include.indexOf(key) >= 0) {
+              if (include[key]) {
                 const {
                   constructor: {
                     serializer: relatedSerializer
@@ -384,7 +374,7 @@ class Serializer {
 
                 if (relatedSerializer) {
                   hash.included.push(
-                    relatedSerializer.serializeOne(related, [], fields)
+                    relatedSerializer.serializeOne(related, [], include[key])
                   );
                 }
               }
@@ -415,8 +405,8 @@ class Serializer {
     stream: Readable,
     key: string,
     data: Array<Model> | Model,
-    include: Array<any>,
-    fields: Object
+    include: Object,
+    fields: Array<string>
   ): void {
     stream.push(`"${this.formatKey(key)}":`);
 
@@ -508,8 +498,8 @@ class Serializer {
   async serializePayload(
     stream: Readable,
     payload: Object,
-    include: Array<any>,
-    fields: Object
+    include: Object,
+    fields: Array<string>
   ): Promise<Readable> {
     tryCatch(() => {
       const payloadKeys: Array<string> = Object.keys(payload);
@@ -540,7 +530,7 @@ class Serializer {
   /**
    * @private
    */
-  stream(payload: Object, include: Array<any>, fields: Object): Readable {
+  stream(payload: Object, include: Object, fields: Array<string>): Readable {
     const stream: Readable = new Readable({
       encoding: 'utf8'
     });
@@ -555,8 +545,8 @@ class Serializer {
    */
   serializeOne(
     item: Model,
-    include: Array<any>,
-    fields: Object,
+    include: Object,
+    fields: Array<string>,
     links: boolean = true
   ): Object {
     const {
@@ -572,13 +562,13 @@ class Serializer {
     const data = {
       id,
       type,
-      attributes: this.attributesFor(item, this.fieldsFor(name, fields)),
+      attributes: this.attributesFor(item, fields),
       relationships: null,
       included: null,
       links: {}
     };
 
-    const relationships = this.relationshipsFor(item, include, fields);
+    const relationships = this.relationshipsFor(item, include);
 
     if (Object.keys(relationships.data).length) {
       data.relationships = relationships.data;

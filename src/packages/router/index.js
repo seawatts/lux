@@ -139,6 +139,7 @@ class Router {
         }
       }
 
+      req.route = route;
       this.visit(req, res, route);
     } else {
       this.notFound(req, res);

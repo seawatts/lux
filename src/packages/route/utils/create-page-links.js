@@ -51,15 +51,17 @@ export default function createPageLinks(domain, path, params, total) {
       return sortStr;
     }, '');
 
-    first += `&sort=${sort}`;
-    last += `&sort=${sort}`;
+    if (sort !== 'created-at') {
+      first += `&sort=${sort}`;
+      last += `&sort=${sort}`;
 
-    if (next) {
-      next += `&sort=${sort}`;
-    }
+      if (next) {
+        next += `&sort=${sort}`;
+      }
 
-    if (prev) {
-      prev += `&sort=${sort}`;
+      if (prev) {
+        prev += `&sort=${sort}`;
+      }
     }
   }
 

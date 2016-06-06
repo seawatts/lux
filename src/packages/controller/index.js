@@ -1,9 +1,5 @@
 import Model from '../database/model';
 
-import omit from '../../utils/omit';
-import getRecord from './utils/get-record';
-import formatInclude from './utils/format-include';
-
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import type Cache from '../cache';
@@ -354,39 +350,19 @@ class Controller {
    * This method supports filtering, sorting, pagination, including
    * relationships, and sparse fieldsets via query parameters.
    */
-  async index(req: IncomingMessage, res: ServerResponse): Promise<Collection> {
+  index(req: IncomingMessage, res: ServerResponse): Promise<Collection> {
     const {
-      model,
-      modelName,
-      relationships
-    } = this;
-
-    let {
       params: {
         sort,
         page,
         limit,
+        filter,
         fields,
-        include = [],
-        filter
+        include
       }
     } = req;
 
-    let select = fields[modelName];
-    let includedFields = omit(fields, modelName);
-
-    if (!limit) {
-      limit = this.defaultPerPage;
-      req.params.limit = limit;
-    }
-
-    if (!select) {
-      select = this.attributes;
-    }
-
-    include = formatInclude(model, include, includedFields, relationships);
-
-    return await model.select(...select)
+    return this.model.select(...fields)
       .include(include)
       .limit(limit)
       .page(page)
@@ -401,14 +377,24 @@ class Controller {
    * query parameters.
    */
   show(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
-    return getRecord(this, req, res);
+    const {
+      params: {
+        id,
+        fields,
+        include
+      }
+    } = req;
+
+    return this.model.find(id)
+      .select(...fields)
+      .include(include);
   }
 
   /**
    * Create and return a single `Model` instance that the Controller instance
    * represents.
    */
-  async create(req: IncomingMessage, res: ServerResponse): Promise<Model> {
+  create(req: IncomingMessage, res: ServerResponse): Promise<Model> {
     const {
       params: {
         data: {
@@ -417,7 +403,7 @@ class Controller {
       }
     } = req;
 
-    return await this.model.create(attributes);
+    return this.model.create(attributes);
   }
 
   /**
@@ -425,15 +411,19 @@ class Controller {
    * represents.
    */
   async update(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
-    const record = await getRecord(this, req, res);
+    let record;
 
     const {
       params: {
+        id,
+
         data: {
           attributes
         }
       }
     } = req;
+
+    record = await this.model.find(id);
 
     if (record) {
       await record.update(attributes);
@@ -446,7 +436,7 @@ class Controller {
    * Destroy a single `Model` instance that the Controller instance represents.
    */
   async destroy(req: IncomingMessage, res: ServerResponse): Promise<?Model> {
-    const record = await getRecord(this, req, res);
+    const record = await this.model.find(req.params.id);
 
     if (record) {
       await record.destroy();
