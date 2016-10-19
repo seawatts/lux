@@ -138,7 +138,7 @@ cd <app-name>
 lux serve
 ```
 
-For more information checkout out the [Guides](https://github.com/postlight/node-framework/wiki).
+For more information checkout out the [Guides](https://lux.postlight.com/).
 
 
 ## Benchmarks
